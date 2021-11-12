@@ -950,6 +950,7 @@ POSNS as (
       nbrjobs_orgn_code_ts,
       NBRJOBS_ANN_SALARY,
       NBRJOBS_ECLS_CODE,
+      NBRJOBS_POSN,
       (SELECT ftvorgn_title
         FROM ftvorgn
         WHERE a.nbrjobs_orgn_code_ts = ftvorgn_orgn_code
@@ -1019,6 +1020,7 @@ POSNS as (
       nbrjobs_orgn_code_ts,
       NBRJOBS_ANN_SALARY,
       NBRJOBS_ECLS_CODE,
+      NBRJOBS_POSN,
       (SELECT ftvorgn_title
       FROM ftvorgn
       WHERE a.nbrjobs_orgn_code_ts = ftvorgn_orgn_code
@@ -1118,16 +1120,21 @@ SELECT DISTINCT NVL((SELECT GOBTPAC_EXTERNAL_USER FROM gobtpac WHERE GOBTPAC_PID
        ' ' PerformanceSitePostalCode,
        ' ' PerformanceSiteWebsite,
        'TX-001' PerformanceSiteCongressionalDistrict,
-       '12' CalendarMonths,
-       CASE WHEN NBRJOBS_ECLS_CODE LIKE 'E%' THEN TO_CHAR(POSNS.NBRJOBS_ANN_SALARY)
+       CASE WHEN NBRJOBS_POSN LIKE 'E%' OR NBRJOBS_POSN LIKE 'H%' OR NBRJOBS_POSN LIKE 'N%' THEN '12' ELSE ' ' END
+       CalendarMonths,
+       CASE WHEN NBRJOBS_POSN LIKE 'E%' OR NBRJOBS_POSN LIKE 'H%' OR NBRJOBS_POSN LIKE 'N%' THEN TO_CHAR(POSNS.NBRJOBS_ANN_SALARY)
        		ELSE ' ' END
        CalendarSalary,
-       '9' AcademicMonths,
-       CASE WHEN NBRJOBS_ECLS_CODE LIKE 'F%' THEN TO_CHAR(POSNS.NBRJOBS_ANN_SALARY)
+       CASE WHEN NBRJOBS_POSN LIKE 'F%' THEN '9' ELSE ' ' END
+       AcademicMonths,
+       CASE WHEN NBRJOBS_POSN LIKE 'F%' THEN TO_CHAR(POSNS.NBRJOBS_ANN_SALARY)
        		ELSE ' ' END
        AcademicSalary,
-       '3' SummerMonths,
-       ' ' SummerSalary,
+       CASE WHEN NBRJOBS_POSN LIKE 'P%' THEN '3' ELSE ' ' END
+       SummerMonths,
+       CASE WHEN NBRJOBS_POSN LIKE 'P%' THEN TO_CHAR(POSNS.NBRJOBS_ANN_SALARY*3)
+       		ELSE ' ' END
+       SummerSalary,
        'Y' PrincipalInvestigator,
        ' ' Assistant,
        ' ' AdministrationOfficial,
@@ -1137,3 +1144,5 @@ FROM POSNS
 LEFT JOIN PEOPLE
 ON PEOPLE.EMPLOYEE_ID = POSNS.SPRIDEN_ID
 ORDER BY USERNAME ASC, POSNS.SPRIDEN_ID ASC;
+
+SELECT * FROM NBRJOBS;
