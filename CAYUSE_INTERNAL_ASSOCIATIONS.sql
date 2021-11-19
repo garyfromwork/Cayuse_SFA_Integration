@@ -1,4 +1,274 @@
-WITH RAW_PRESIDENT AS (
+WITH primary_posns AS (
+    SELECT
+        Z.*,
+        NBRBJOB.*,
+        C.*,
+        A.*,
+        'Yes' PRIMARY_POSN
+    FROM
+        spriden z,
+        nbrbjob,
+        pebempl c,
+        nbrjobs a
+    WHERE
+        a.nbrjobs_pidm = spriden_pidm
+        AND a.nbrjobs_pidm = pebempl_pidm
+        AND a.nbrjobs_pidm = nbrbjob_pidm
+        AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
+        AND PEBEMPL_EMPL_STATUS <> 'T'
+        AND NBRBJOB_CONTRACT_TYPE = 'P'
+        AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
+            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
+            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
+            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
+            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
+            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
+            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
+        AND nbrbjob_suff IN(
+            SELECT
+                DISTINCT i.pzrappt_suff
+            FROM
+                txcnmgr.pzrappt i
+            WHERE
+                i.pzrappt_pidm = a.nbrjobs_pidm
+                AND i.pzrappt_apptno =(
+                        SELECT
+                            MAX(j.pzrappt_apptno)
+                        FROM
+                            txcnmgr.pzrappt j
+                        WHERE
+                            j.pzrappt_pidm = i.pzrappt_pidm
+                            AND j.pzrappt_posn IN(
+                                SELECT
+                                    k.nbrbjob_posn
+                                FROM
+                                    nbrbjob k,
+                                    nbrjobs l
+                                WHERE
+                                    k.nbrbjob_pidm = j.pzrappt_pidm --and k.nbrbjob_posn = j.pzrappt_posn
+                                    --and k.nbrbjob_suff = j.pzrappt_suff
+                                    AND k.nbrbjob_contract_type = 'P'
+                                    AND k.nbrbjob_begin_date <= sysdate
+                                    AND(
+                                        k.nbrbjob_end_date IS NULL
+                                        OR(
+                                            k.nbrbjob_end_date IS NOT NULL
+                                            AND k.nbrbjob_end_date > sysdate
+                                        )
+                                    )
+                                    AND l.nbrjobs_pidm = k.nbrbjob_pidm
+                                    AND l.nbrjobs_posn = k.nbrbjob_posn
+                                    AND l.nbrjobs_suff = k.nbrbjob_suff --and l.nbrjobs_ecls_code in ('R1', 'R2', 'R3', 'R4', 'R5', 'R6')
+                                    AND l.nbrjobs_status <> 'T' --AND (UPPER(NBRJOBS_DESC) NOT LIKE '%(TEMP)%' AND NBRJOBS_POSN NOT LIKE 'H%')
+                                    AND l.nbrjobs_effective_date =(
+                                        SELECT
+                                            MAX(nbrjobs_effective_date)
+                                        FROM
+                                            nbrjobs m
+                                        WHERE
+                                            m.nbrjobs_pidm = l.nbrjobs_pidm
+                                            AND m.nbrjobs_posn = l.nbrjobs_posn
+                                            AND m.nbrjobs_suff = l.nbrjobs_suff
+                                            AND m.nbrjobs_effective_date <= sysdate
+                                    )
+                                )
+                        )
+                )
+        AND a.nbrjobs_status <> 'T'
+        AND nbrbjob_posn = a.nbrjobs_posn
+        AND nbrbjob_suff = a.nbrjobs_suff
+        AND a.nbrjobs_effective_date =(
+            SELECT
+                MAX(nbrjobs_effective_date)
+            FROM
+                nbrjobs
+            WHERE
+                nbrjobs_pidm = a.nbrjobs_pidm
+                AND nbrjobs_posn = a.nbrjobs_posn
+                AND nbrjobs_suff = a.nbrjobs_suff
+                AND nbrjobs_effective_date <= sysdate
+        ) --AND pebempl_empl_status <> 'T'
+        AND pebempl_ecls_code NOT IN(
+            'R0',
+            'S1',
+            'S2',
+            'S3'
+        )
+        AND spriden_pidm IN(
+            SELECT
+                DISTINCT pebempl_pidm
+            FROM
+                pebempl
+            WHERE
+                --pebempl_empl_status <> 'T'
+                (
+                    pebempl_trea_code IS NULL
+                    OR(
+                        pebempl_trea_code IS NOT NULL
+                        AND pebempl_term_date > sysdate
+                    )
+                )
+                AND NOT EXISTS(
+                    SELECT
+                        1
+                    FROM
+                        spriden
+                    WHERE
+                        spriden_pidm = pebempl_pidm
+                        AND spriden_change_ind IS NULL
+                        AND lower(spriden_last_name) LIKE 'xxx%'
+                )
+        )
+        AND spriden_change_ind IS NULL
+        AND nbrbjob_begin_date <= sysdate
+        AND(
+            nbrbjob_end_date IS NULL
+            OR(
+                nbrbjob_end_date IS NOT NULL
+                AND nbrbjob_end_date > sysdate
+            )
+        )
+    ORDER BY
+        spriden_last_name,
+        spriden_mi,
+        spriden_first_name ASC
+),
+secondary_posns AS (
+    SELECT
+        Z.*,
+        NBRBJOB.*,
+        C.*,
+        A.*,
+        'No' PRIMARY_POSN
+    FROM
+        spriden z,
+        nbrbjob,
+        pebempl c,
+        nbrjobs a
+    WHERE
+        a.nbrjobs_pidm = spriden_pidm
+        AND a.nbrjobs_pidm = pebempl_pidm
+        AND a.nbrjobs_pidm = nbrbjob_pidm
+        AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
+        AND PEBEMPL_EMPL_STATUS <> 'T'
+        AND NBRBJOB_CONTRACT_TYPE = 'S'
+        AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
+            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
+            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
+            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
+            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
+            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
+            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
+        AND nbrbjob_suff IN(
+            SELECT
+                DISTINCT i.pzrappt_suff
+            FROM
+                txcnmgr.pzrappt i
+            WHERE
+                i.pzrappt_pidm = a.nbrjobs_pidm
+                AND i.pzrappt_apptno =(
+                        SELECT
+                            MAX(j.pzrappt_apptno)
+                        FROM
+                            txcnmgr.pzrappt j
+                        WHERE
+                            j.pzrappt_pidm = i.pzrappt_pidm
+                            AND j.pzrappt_posn IN(
+                                SELECT
+                                    k.nbrbjob_posn
+                                FROM
+                                    nbrbjob k,
+                                    nbrjobs l
+                                WHERE
+                                    k.nbrbjob_pidm = j.pzrappt_pidm --and k.nbrbjob_posn = j.pzrappt_posn
+                                    --and k.nbrbjob_suff = j.pzrappt_suff
+                                    AND k.nbrbjob_contract_type = 'S'
+                                    AND k.nbrbjob_begin_date <= sysdate
+                                    AND(
+                                        k.nbrbjob_end_date IS NULL
+                                        OR(
+                                            k.nbrbjob_end_date IS NOT NULL
+                                            AND k.nbrbjob_end_date > sysdate
+                                        )
+                                    )
+                                    AND l.nbrjobs_pidm = k.nbrbjob_pidm
+                                    AND l.nbrjobs_posn = k.nbrbjob_posn
+                                    AND l.nbrjobs_suff = k.nbrbjob_suff --and l.nbrjobs_ecls_code in ('R1', 'R2', 'R3', 'R4', 'R5', 'R6')
+                                    AND l.nbrjobs_status <> 'T' --AND (UPPER(NBRJOBS_DESC) NOT LIKE '%(TEMP)%' AND NBRJOBS_POSN NOT LIKE 'H%')
+                                    AND l.nbrjobs_effective_date =(
+                                        SELECT
+                                            MAX(nbrjobs_effective_date)
+                                        FROM
+                                            nbrjobs m
+                                        WHERE
+                                            m.nbrjobs_pidm = l.nbrjobs_pidm
+                                            AND m.nbrjobs_posn = l.nbrjobs_posn
+                                            AND m.nbrjobs_suff = l.nbrjobs_suff
+                                            AND m.nbrjobs_effective_date <= sysdate
+                                    )
+                                )
+                        )
+                )
+        AND a.nbrjobs_status <> 'T'
+        AND nbrbjob_posn = a.nbrjobs_posn
+        AND nbrbjob_suff = a.nbrjobs_suff
+        AND a.nbrjobs_effective_date =(
+            SELECT
+                MAX(nbrjobs_effective_date)
+            FROM
+                nbrjobs
+            WHERE
+                nbrjobs_pidm = a.nbrjobs_pidm
+                AND nbrjobs_posn = a.nbrjobs_posn
+                AND nbrjobs_suff = a.nbrjobs_suff
+                AND nbrjobs_effective_date <= sysdate
+        ) --AND pebempl_empl_status <> 'T'
+        AND pebempl_ecls_code NOT IN(
+            'R0',
+            'S1',
+            'S2',
+            'S3'
+        )
+        AND spriden_pidm IN(
+            SELECT
+                DISTINCT pebempl_pidm
+            FROM
+                pebempl
+            WHERE
+                --pebempl_empl_status <> 'T'
+                (
+                    pebempl_trea_code IS NULL
+                    OR(
+                        pebempl_trea_code IS NOT NULL
+                        AND pebempl_term_date > sysdate
+                    )
+                )
+                AND NOT EXISTS(
+                    SELECT
+                        1
+                    FROM
+                        spriden
+                    WHERE
+                        spriden_pidm = pebempl_pidm
+                        AND spriden_change_ind IS NULL
+                        AND lower(spriden_last_name) LIKE 'xxx%'
+                )
+        )
+        AND spriden_change_ind IS NULL
+        AND nbrbjob_begin_date <= sysdate
+        AND(
+            nbrbjob_end_date IS NULL
+            OR(
+                nbrbjob_end_date IS NOT NULL
+                AND nbrbjob_end_date > sysdate
+            )
+        )
+    ORDER BY
+        spriden_last_name,
+        spriden_mi,
+        spriden_first_name ASC
+),
+RAW_PRESIDENT AS (
 	SELECT SPRIDEN_LAST_NAME, 
 		SPRIDEN_MI, 
 		SPRIDEN_FIRST_NAME, 
@@ -22,14 +292,6 @@ WITH RAW_PRESIDENT AS (
         AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
     WHERE NBRJOBS_STATUS = 'A'
     AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
-	AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-    AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ASST%'
@@ -82,14 +344,6 @@ RAW_VP AS (
     --AND NBRBJOB_CONTRACT_TYPE = 'P'
     AND (NBRBJOB_BEGIN_DATE <= SYSDATE AND (NBRBJOB_END_DATE > SYSDATE OR NBRBJOB_END_DATE IS NULL))
     AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
-	AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-    AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
     AND (UPPER(NBRJOBS_DESC) LIKE '%VP %' 
         OR UPPER(NBRJOBS_DESC) LIKE '%VP'
         OR UPPER(NBRJOBS_DESC) LIKE '%VICE PRESIDENT%' 
@@ -139,14 +393,6 @@ RAW_PROVOST AS (
     --AND NBRBJOB_CONTRACT_TYPE = 'P'
     AND (NBRBJOB_BEGIN_DATE <= SYSDATE AND (NBRBJOB_END_DATE > SYSDATE OR NBRBJOB_END_DATE IS NULL))
     AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
-	AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-    AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
 	AND (UPPER(NBRJOBS_DESC) LIKE '%PROVOST%' OR UPPER(NBRJOBS_DESC) LIKE '%EXEC ASST%PROVOST%')
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%STUDENT%'
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%PROVOST EXEC VP%'
@@ -184,14 +430,6 @@ RAW_DIRECTORS AS (
         AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
     WHERE NBRJOBS_STATUS = 'A'
 	AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
-	AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-    AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ASST%')
 	AND ((UPPER(NBRJOBS_DESC) LIKE '%DIR/PROFESSOR%')
         OR (UPPER(NBRJOBS_DESC) LIKE 'DIR/ASSC PROFESSOR')
@@ -249,14 +487,6 @@ RAW_ACADEMIC_SU AS (
         AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
     WHERE NBRJOBS_STATUS = 'A'
 	AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
-	AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-    AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ASST%')
 	AND (UPPER(NBRJOBS_DESC) LIKE '%CHAIR%' 
         OR UPPER(NBRJOBS_DESC) LIKE '%DEAN%' 
@@ -299,15 +529,8 @@ RAW_FACULTY AS (
         AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
     WHERE NBRJOBS_STATUS = 'A'
 	AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
-	AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-    AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
 	AND NBRJOBS_POSN LIKE 'F%'
+    AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASST%')
@@ -348,13 +571,6 @@ RAW_EMPLOYEE AS (
     WHERE NBRJOBS_STATUS = 'A'
 	AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
 	AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-    AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101') 
 	AND NBRJOBS_POSN LIKE 'E%'
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
@@ -396,13 +612,6 @@ RAW_EXECUTIVE_ASSISTANTS AS (
     WHERE NBRJOBS_STATUS = 'A'
     AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
 	AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-    AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
     AND UPPER(NBRJOBS_DESC) NOT LIKE 'ASST TO DEAN STDNTS'
@@ -444,13 +653,6 @@ RAW_ASSISTANTS AS (
     WHERE NBRJOBS_STATUS = 'A'
     AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
 	AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-    AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
 	AND (UPPER(NBRJOBS_DESC) LIKE UPPER('%Asst To Dean%')
@@ -496,13 +698,6 @@ RAW_ADMIN AS (
     WHERE NBRJOBS_STATUS = 'A'
     AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
 	AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-    AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
 	AND LOWER(NBRJOBS_DESC) LIKE '%asst admin%'
@@ -953,12 +1148,12 @@ POSNS as (
       NBRJOBS_POSN,
       (SELECT ftvorgn_title
         FROM ftvorgn
-        WHERE a.nbrjobs_orgn_code_ts = ftvorgn_orgn_code
+        WHERE nbrjobs_orgn_code_ts = ftvorgn_orgn_code
         AND FTVORGN_STATUS_IND       = 'A'
         AND FTVORGN_eff_DATE         =
             (SELECT MAX(FTVORGN_eff_DATE)
                 FROM FTVORGN B
-                WHERE B.FTVORGN_ORGN_CODE = a.nbrjobs_orgn_code_ts
+                WHERE B.FTVORGN_ORGN_CODE = nbrjobs_orgn_code_ts
                 AND FTVORGN_STATUS_IND    = 'A')
       ) TS_ORGN_DESC,
       pebempl_orgn_code_home,
@@ -973,37 +1168,10 @@ POSNS as (
         AND B.FTVORGN_STATUS_IND  = 'A'
         )
       ) HOME_ORGN_DESC,
-      'Yes' PRIMARY_APPOINTMENT
-    FROM spriden,
-      nbrbjob,
-      pebempl c,
-      nbrjobs a
-    WHERE nbrbjob_pidm           = spriden_pidm
-    AND spriden_pidm             = pebempl_pidm
-    AND nbrjobs_pidm             = pebempl_pidm
-    AND nbrjobs_pidm             = nbrbjob_pidm
-    AND nbrbjob_contract_type    = 'P'
-    AND nbrjobs_status          != 'T'
-    AND nbrbjob_posn             = nbrjobs_posn
-    AND nbrbjob_suff             = nbrjobs_suff
-    AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%'
+      PRIMARY_POSN
+    FROM PRIMARY_POSNS
+    WHERE UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%'
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%JUNCT%'
-    AND a.NBRJOBS_EFFECTIVE_DATE =
-      (SELECT MAX(NBRJOBS_EFFECTIVE_DATE)
-        FROM nbrjobs
-          WHERE nbrjobs_pidm        = a.nbrjobs_pidm
-          AND nbrjobs_posn          = a.nbrjobs_posn
-          AND nbrjobs_suff          = a.nbrjobs_suff
-          AND nbrjobs_status        = a.nbrjobs_status
-          AND NBRJOBS_ECLS_CODE     = a.NBRJOBS_ECLS_CODE
-          AND NBRJOBS_ORGN_CODE_TS  = a.NBRJOBS_ORGN_CODE_TS
-		  AND NBRJOBS_DESC          = a.NBRJOBS_DESC
-      )
-    AND pebempl_empl_status                != 'T'
-    AND pebempl_ecls_code                  != 'R0'
-    AND spriden_change_ind                 IS NULL
-    AND (NBRBJOB_END_DATE                  > SYSDATE
-    OR NBRBJOB_END_DATE                    IS NULL)
     AND SPRIDEN_ID IN (SELECT DISTINCT PEOPLE.EMPLOYEE_ID FROM PEOPLE)
     union all
     SELECT distinct spriden_id,
@@ -1022,15 +1190,14 @@ POSNS as (
       NBRJOBS_ECLS_CODE,
       NBRJOBS_POSN,
       (SELECT ftvorgn_title
-      FROM ftvorgn
-      WHERE a.nbrjobs_orgn_code_ts = ftvorgn_orgn_code
-      AND FTVORGN_STATUS_IND       = 'A'
-      AND FTVORGN_eff_DATE         =
-        (SELECT MAX(FTVORGN_eff_DATE)
-        FROM FTVORGN B
-        WHERE B.FTVORGN_ORGN_CODE = a.nbrjobs_orgn_code_ts
-        AND FTVORGN_STATUS_IND    = 'A'
-        )
+          FROM ftvorgn
+          WHERE nbrjobs_orgn_code_ts = ftvorgn_orgn_code
+          AND FTVORGN_STATUS_IND       = 'A'
+          AND FTVORGN_eff_DATE         =
+            (SELECT MAX(FTVORGN_eff_DATE)
+            FROM FTVORGN B
+            WHERE B.FTVORGN_ORGN_CODE = nbrjobs_orgn_code_ts
+            AND FTVORGN_STATUS_IND    = 'A')
       ) TS_ORGN_DESC,
       pebempl_orgn_code_home,
       (SELECT ftvorgn_title
@@ -1044,37 +1211,10 @@ POSNS as (
         AND B.FTVORGN_STATUS_IND  = 'A'
         )
       ) HOME_ORGN_DESC,
-      'No' PRIMARY_APPOINTMENT
-    FROM spriden,
-      nbrbjob,
-      pebempl c,
-      nbrjobs a
-    WHERE nbrbjob_pidm           = spriden_pidm
-    AND spriden_pidm             = pebempl_pidm
-    AND nbrjobs_pidm             = pebempl_pidm
-    AND nbrjobs_pidm             = nbrbjob_pidm
-    AND nbrbjob_contract_type    <> 'P'
-    AND nbrjobs_status          != 'T'
-    AND nbrbjob_posn             = nbrjobs_posn
-    AND nbrbjob_suff             = nbrjobs_suff
-    AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%'
+      PRIMARY_POSN
+    FROM SECONDARY_POSNS
+    WHERE UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%'
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%JUNCT%'
-    AND a.NBRJOBS_EFFECTIVE_DATE =
-      (SELECT MAX(NBRJOBS_EFFECTIVE_DATE)
-        FROM nbrjobs
-          WHERE nbrjobs_pidm        = a.nbrjobs_pidm
-          AND nbrjobs_posn          = a.nbrjobs_posn
-          AND nbrjobs_suff          = a.nbrjobs_suff
-          AND nbrjobs_status        = a.nbrjobs_status
-          AND NBRJOBS_ECLS_CODE     = a.NBRJOBS_ECLS_CODE
-          AND NBRJOBS_ORGN_CODE_TS  = a.NBRJOBS_ORGN_CODE_TS
-		  AND NBRJOBS_DESC          = a.NBRJOBS_DESC
-      )
-    AND pebempl_empl_status                != 'T'
-    AND pebempl_ecls_code                  != 'R0'
-    AND spriden_change_ind                 IS NULL
-    AND (NBRBJOB_END_DATE                  > SYSDATE
-    OR NBRBJOB_END_DATE                    IS NULL)
     AND SPRIDEN_ID IN (SELECT DISTINCT PEOPLE.EMPLOYEE_ID FROM PEOPLE)
 ) 
 SELECT DISTINCT NVL((SELECT GOBTPAC_EXTERNAL_USER FROM gobtpac WHERE GOBTPAC_PIDM = (SELECT SPRIDEN_PIDM FROM SPRIDEN WHERE SPRIDEN_ID = POSNS.SPRIDEN_ID AND SPRIDEN_CHANGE_IND IS NULL)), ' ') Username,
@@ -1086,7 +1226,7 @@ SELECT DISTINCT NVL((SELECT GOBTPAC_EXTERNAL_USER FROM gobtpac WHERE GOBTPAC_PID
         AND FTVORGN_STATUS_IND = 'A') UnitPrimaryCode,
        POSNS.TS_ORGN_DESC UnitName,
        POSNS.NBRJOBS_DESC Title,
-       POSNS.PRIMARY_APPOINTMENT PrimaryAppointment,
+       POSNS.PRIMARY_POSN PrimaryAppointment,
        ' ' USGovernmentAgency,
        PEOPLE.EMAIL ContactEmail,
        ' ' ContactOfficePhone,
@@ -1144,5 +1284,3 @@ FROM POSNS
 LEFT JOIN PEOPLE
 ON PEOPLE.EMPLOYEE_ID = POSNS.SPRIDEN_ID
 ORDER BY USERNAME ASC, POSNS.SPRIDEN_ID ASC;
-
-SELECT * FROM NBRJOBS;
