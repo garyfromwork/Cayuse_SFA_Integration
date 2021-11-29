@@ -24,56 +24,6 @@ WITH primary_posns AS (
             '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
             '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
             '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
-        AND nbrbjob_suff IN(
-            SELECT
-                DISTINCT i.pzrappt_suff
-            FROM
-                txcnmgr.pzrappt i
-            WHERE
-                i.pzrappt_pidm = a.nbrjobs_pidm
-                AND i.pzrappt_apptno =(
-                        SELECT
-                            MAX(j.pzrappt_apptno)
-                        FROM
-                            txcnmgr.pzrappt j
-                        WHERE
-                            j.pzrappt_pidm = i.pzrappt_pidm
-                            AND j.pzrappt_posn IN(
-                                SELECT
-                                    k.nbrbjob_posn
-                                FROM
-                                    nbrbjob k,
-                                    nbrjobs l
-                                WHERE
-                                    k.nbrbjob_pidm = j.pzrappt_pidm --and k.nbrbjob_posn = j.pzrappt_posn
-                                    --and k.nbrbjob_suff = j.pzrappt_suff
-                                    AND k.nbrbjob_contract_type = 'P'
-                                    AND k.nbrbjob_begin_date <= sysdate
-                                    AND(
-                                        k.nbrbjob_end_date IS NULL
-                                        OR(
-                                            k.nbrbjob_end_date IS NOT NULL
-                                            AND k.nbrbjob_end_date > sysdate
-                                        )
-                                    )
-                                    AND l.nbrjobs_pidm = k.nbrbjob_pidm
-                                    AND l.nbrjobs_posn = k.nbrbjob_posn
-                                    AND l.nbrjobs_suff = k.nbrbjob_suff --and l.nbrjobs_ecls_code in ('R1', 'R2', 'R3', 'R4', 'R5', 'R6')
-                                    AND l.nbrjobs_status <> 'T' --AND (UPPER(NBRJOBS_DESC) NOT LIKE '%(TEMP)%' AND NBRJOBS_POSN NOT LIKE 'H%')
-                                    AND l.nbrjobs_effective_date =(
-                                        SELECT
-                                            MAX(nbrjobs_effective_date)
-                                        FROM
-                                            nbrjobs m
-                                        WHERE
-                                            m.nbrjobs_pidm = l.nbrjobs_pidm
-                                            AND m.nbrjobs_posn = l.nbrjobs_posn
-                                            AND m.nbrjobs_suff = l.nbrjobs_suff
-                                            AND m.nbrjobs_effective_date <= sysdate
-                                    )
-                                )
-                        )
-                )
         AND a.nbrjobs_status <> 'T'
         AND nbrbjob_posn = a.nbrjobs_posn
         AND nbrbjob_suff = a.nbrjobs_suff
@@ -159,56 +109,6 @@ secondary_posns AS (
             '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
             '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
             '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
-        AND nbrbjob_suff IN(
-            SELECT
-                DISTINCT i.pzrappt_suff
-            FROM
-                txcnmgr.pzrappt i
-            WHERE
-                i.pzrappt_pidm = a.nbrjobs_pidm
-                AND i.pzrappt_apptno =(
-                        SELECT
-                            MAX(j.pzrappt_apptno)
-                        FROM
-                            txcnmgr.pzrappt j
-                        WHERE
-                            j.pzrappt_pidm = i.pzrappt_pidm
-                            AND j.pzrappt_posn IN(
-                                SELECT
-                                    k.nbrbjob_posn
-                                FROM
-                                    nbrbjob k,
-                                    nbrjobs l
-                                WHERE
-                                    k.nbrbjob_pidm = j.pzrappt_pidm --and k.nbrbjob_posn = j.pzrappt_posn
-                                    --and k.nbrbjob_suff = j.pzrappt_suff
-                                    AND k.nbrbjob_contract_type = 'S'
-                                    AND k.nbrbjob_begin_date <= sysdate
-                                    AND(
-                                        k.nbrbjob_end_date IS NULL
-                                        OR(
-                                            k.nbrbjob_end_date IS NOT NULL
-                                            AND k.nbrbjob_end_date > sysdate
-                                        )
-                                    )
-                                    AND l.nbrjobs_pidm = k.nbrbjob_pidm
-                                    AND l.nbrjobs_posn = k.nbrbjob_posn
-                                    AND l.nbrjobs_suff = k.nbrbjob_suff --and l.nbrjobs_ecls_code in ('R1', 'R2', 'R3', 'R4', 'R5', 'R6')
-                                    AND l.nbrjobs_status <> 'T' --AND (UPPER(NBRJOBS_DESC) NOT LIKE '%(TEMP)%' AND NBRJOBS_POSN NOT LIKE 'H%')
-                                    AND l.nbrjobs_effective_date =(
-                                        SELECT
-                                            MAX(nbrjobs_effective_date)
-                                        FROM
-                                            nbrjobs m
-                                        WHERE
-                                            m.nbrjobs_pidm = l.nbrjobs_pidm
-                                            AND m.nbrjobs_posn = l.nbrjobs_posn
-                                            AND m.nbrjobs_suff = l.nbrjobs_suff
-                                            AND m.nbrjobs_effective_date <= sysdate
-                                    )
-                                )
-                        )
-                )
         AND a.nbrjobs_status <> 'T'
         AND nbrbjob_posn = a.nbrjobs_posn
         AND nbrbjob_suff = a.nbrjobs_suff
