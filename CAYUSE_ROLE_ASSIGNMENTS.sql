@@ -1114,10 +1114,4 @@ SELECT DISTINCT PEOPLE.TITLE, PEOPLE.USERNAME Username,
         ' ' Unit,
         ' ' IncludeAllSubUnits
 FROM PEOPLE -- Cayuse 424 Link Viewer
-UNION
-SELECT DISTINCT PEOPLE.TITLE, PEOPLE.USERNAME Username,
-        'SP Award Viewer' Role,
-        ' ' Unit,
-        ' ' IncludeAllSubUnits
-FROM PEOPLE WHERE PEOPLE.TITLE = ANY('DEAN ASSISTANTS') -- DEAN ASSISTANTS
 ORDER BY TITLE asc, USERNAME ASC, Role asc;
