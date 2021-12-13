@@ -312,7 +312,11 @@ RAW_DIRECTORS AS (
         OR (UPPER(NBRJOBS_DESC) LIKE '%OFFCR CHIEF DIVERSITY%')
         OR (UPPER(NBRJOBS_DESC) LIKE 'DIR ATH')
         OR (UPPER(NBRJOBS_DESC) LIKE '%DIRECTOR%')
-        OR (UPPER(NBRJOBS_DESC) LIKE '%INTERIM%%DIR%'))
+        OR (UPPER(NBRJOBS_DESC) LIKE '%INTERIM%%DIR%')
+        OR (UPPER(NBRJOBS_DESC) LIKE 'DIR LIBRARY')
+        OR (UPPER(NBRJOBS_DESC) LIKE UPPER('Offcr Chief Information'))
+        OR (UPPER(NBRJOBS_DESC) LIKE UPPER('Dir Fincl Aid'))
+        OR (UPPER(NBRJOBS_DESC) LIKE UPPER('Dir Res Life')))
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASST%')
@@ -333,7 +337,11 @@ RAW_DIRECTORS AS (
         OR (UPPER(NBRJOBS_DESC) LIKE '%OFFCR CHIEF DIVERSITY%')
         OR (UPPER(NBRJOBS_DESC) LIKE 'DIR ATH')
         OR (UPPER(NBRJOBS_DESC) LIKE '%DIRECTOR%')
-        OR (UPPER(NBRJOBS_DESC) LIKE '%INTERIM%%DIR%'))
+        OR (UPPER(NBRJOBS_DESC) LIKE '%INTERIM%%DIR%')
+        OR (UPPER(NBRJOBS_DESC) LIKE 'DIR LIBRARY')
+        OR (UPPER(NBRJOBS_DESC) LIKE UPPER('Offcr Chief Information'))
+        OR (UPPER(NBRJOBS_DESC) LIKE UPPER('Dir Fincl Aid'))
+        OR (UPPER(NBRJOBS_DESC) LIKE UPPER('Dir Res Life')))
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASST%')
@@ -378,8 +386,10 @@ RAW_ACADEMIC_SU AS (
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASST%')
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASSISTANT%')
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%Exec Asst%')
+        AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('COORD DEAN%')
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('ASST TO PRESIDENT')
-        AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('ASST TO DEAN STDNTS'))
+        AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('ASST TO DEAN STDNTS')
+        AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('SPP - Professorship Deans Cir'))
     UNION
     SELECT *
     FROM SECONDARY_POSNS
@@ -394,8 +404,10 @@ RAW_ACADEMIC_SU AS (
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASST%')
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASSISTANT%')
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%Exec Asst%')
+        AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('COORD DEAN%')
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('ASST TO PRESIDENT')
-        AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('ASST TO DEAN STDNTS'))
+        AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('ASST TO DEAN STDNTS')
+        AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('SPP - Professorship Deans Cir'))
 ),
 ACADEMIC_SU AS (
     SELECT 'DEANS/CHAIRS' TITLE, RAW_ACADEMIC_SU.* FROM RAW_ACADEMIC_SU
@@ -534,7 +546,8 @@ RAW_ASSISTANTS AS (
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
 	AND (UPPER(NBRJOBS_DESC) LIKE UPPER('%Asst To Dean%')
-        OR UPPER(NBRJOBS_DESC) LIKE UPPER('ASST TO DEAN STDNTS'))
+        OR UPPER(NBRJOBS_DESC) LIKE UPPER('ASST TO DEAN STDNTS')
+        OR UPPER(NBRJOBS_DESC) LIKE UPPER('COORD DEAN%'))
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASST%')
@@ -549,7 +562,8 @@ RAW_ASSISTANTS AS (
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
     AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
 	AND (UPPER(NBRJOBS_DESC) LIKE UPPER('%Asst To Dean%')
-        OR UPPER(NBRJOBS_DESC) LIKE UPPER('ASST TO DEAN STDNTS'))
+        OR UPPER(NBRJOBS_DESC) LIKE UPPER('ASST TO DEAN STDNTS')
+        OR UPPER(NBRJOBS_DESC) LIKE UPPER('COORD DEAN%'))
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASST%')
@@ -640,6 +654,10 @@ PEOPLE AS (
         PRESIDENT.SPRIDEN_LAST_NAME LAST_NAME,
         NVL((SELECT SPBPERS_NAME_PREFIX FROM SPBPERS WHERE SPBPERS_PIDM = PRESIDENT.NBRJOBS_PIDM), ' ') PREFIX,
         NVL((SELECT SPBPERS_NAME_SUFFIX FROM SPBPERS WHERE SPBPERS_PIDM = PRESIDENT.NBRJOBS_PIDM), ' ') SUFFIX,
+        (select distinct nvl(SPBPERS_PREF_FIRST_NAME, ' ') from SPBPERS
+            where spbpers_pidm = (select spriden_pidm from spriden 
+                                    where spriden_id = president.spriden_id 
+                                    and spriden_change_ind is null)) PREFERRED_NAME,
         'Yes' ACTIVE,
         PRESIDENT.SPRIDEN_ID EMPLOYEE_ID,
         NVL((SELECT GOREMAL_EMAIL_ADDRESS FROM GOREMAL WHERE GOREMAL_PIDM = PRESIDENT.NBRJOBS_PIDM AND lower(GOREMAL_EMAIL_ADDRESS) LIKE '%@sfasu.edu' AND GOREMAL_PREFERRED_IND = 'Y'), ' ') EMAIL,
@@ -671,7 +689,12 @@ PEOPLE AS (
         'Nacogdoches' COUNTY,
         'Nacogdoches' CITY,
         '75962-3940' POSTAL_CODE,
-        'Yes' CREATE_ACCOUNT
+        ' ' EMERGENCY_CONTACT,
+        ' ' OFFICE_PHONE,
+        'Email' PREFERRED_CONTACT_METHOD,
+        ' ' MOBILE_PHONE,
+        'Yes' CREATE_ACOUNT,
+        'Yes' USER_ACTIVE
     FROM PRESIDENT
     UNION 
     SELECT VP.TITLE TITLE,
@@ -680,6 +703,10 @@ PEOPLE AS (
         VP.SPRIDEN_LAST_NAME LAST_NAME,
         NVL((SELECT SPBPERS_NAME_PREFIX FROM SPBPERS WHERE SPBPERS_PIDM = VP.NBRJOBS_PIDM), ' ') PREFIX,
         NVL((SELECT SPBPERS_NAME_SUFFIX FROM SPBPERS WHERE SPBPERS_PIDM = VP.NBRJOBS_PIDM), ' ') SUFFIX,
+        (select distinct nvl(SPBPERS_PREF_FIRST_NAME, ' ') from SPBPERS
+            where spbpers_pidm = (select spriden_pidm from spriden 
+                                    where spriden_id = vp.spriden_id 
+                                    and spriden_change_ind is null)) PREFERRED_NAME,
         'Yes' ACTIVE,
         VP.SPRIDEN_ID EMPLOYEE_ID,
         NVL((SELECT GOREMAL_EMAIL_ADDRESS FROM GOREMAL WHERE GOREMAL_PIDM = VP.NBRJOBS_PIDM AND lower(GOREMAL_EMAIL_ADDRESS) LIKE '%@sfasu.edu' AND GOREMAL_PREFERRED_IND = 'Y'), ' ') EMAIL,
@@ -711,7 +738,12 @@ PEOPLE AS (
         'Nacogdoches' COUNTY,
         'Nacogdoches' CITY,
         '75962-3940' POSTAL_CODE,
-        'Yes' CREATE_ACCOUNT
+        ' ' EMERGENCY_CONTACT,
+        ' ' OFFICE_PHONE,
+        'Email' PREFERRED_CONTACT_METHOD,
+        ' ' MOBILE_PHONE,
+        'Yes' CREATE_ACOUNT,
+        'Yes' USER_ACTIVE
     FROM VP
     UNION
     SELECT PROVOST.TITLE TITLE,
@@ -720,6 +752,10 @@ PEOPLE AS (
         PROVOST.SPRIDEN_LAST_NAME LAST_NAME,
         NVL((SELECT SPBPERS_NAME_PREFIX FROM SPBPERS WHERE SPBPERS_PIDM = PROVOST.NBRJOBS_PIDM), ' ') PREFIX,
         NVL((SELECT SPBPERS_NAME_SUFFIX FROM SPBPERS WHERE SPBPERS_PIDM = PROVOST.NBRJOBS_PIDM), ' ') SUFFIX,
+        (select distinct nvl(SPBPERS_PREF_FIRST_NAME, ' ') from SPBPERS
+            where spbpers_pidm = (select spriden_pidm from spriden 
+                                    where spriden_id = provost.spriden_id 
+                                    and spriden_change_ind is null)) PREFERRED_NAME,
         'Yes' ACTIVE,
         PROVOST.SPRIDEN_ID EMPLOYEE_ID,
         NVL((SELECT GOREMAL_EMAIL_ADDRESS FROM GOREMAL WHERE GOREMAL_PIDM = PROVOST.NBRJOBS_PIDM AND lower(GOREMAL_EMAIL_ADDRESS) LIKE '%@sfasu.edu' AND GOREMAL_PREFERRED_IND = 'Y'), ' ') EMAIL,
@@ -751,7 +787,12 @@ PEOPLE AS (
         'Nacogdoches' COUNTY,
         'Nacogdoches' CITY,
         '75962-3940' POSTAL_CODE,
-        'Yes' CREATE_ACCOUNT
+        ' ' EMERGENCY_CONTACT,
+        ' ' OFFICE_PHONE,
+        'Email' PREFERRED_CONTACT_METHOD,
+        ' ' MOBILE_PHONE,
+        'Yes' CREATE_ACOUNT,
+        'Yes' USER_ACTIVE
     FROM PROVOST
     UNION
     SELECT DIRECTORS.TITLE TITLE,
@@ -760,6 +801,10 @@ PEOPLE AS (
         DIRECTORS.SPRIDEN_LAST_NAME LAST_NAME,
         NVL((SELECT SPBPERS_NAME_PREFIX FROM SPBPERS WHERE SPBPERS_PIDM = DIRECTORS.NBRJOBS_PIDM), ' ') PREFIX,
         NVL((SELECT SPBPERS_NAME_SUFFIX FROM SPBPERS WHERE SPBPERS_PIDM = DIRECTORS.NBRJOBS_PIDM), ' ') SUFFIX,
+        (select distinct nvl(SPBPERS_PREF_FIRST_NAME, ' ') from SPBPERS
+            where spbpers_pidm = (select spriden_pidm from spriden 
+                                    where spriden_id = directors.spriden_id 
+                                    and spriden_change_ind is null)) PREFERRED_NAME,
         'Yes' ACTIVE,
         DIRECTORS.SPRIDEN_ID EMPLOYEE_ID,
         NVL((SELECT GOREMAL_EMAIL_ADDRESS FROM GOREMAL WHERE GOREMAL_PIDM = DIRECTORS.NBRJOBS_PIDM AND lower(GOREMAL_EMAIL_ADDRESS) LIKE '%@sfasu.edu' AND GOREMAL_PREFERRED_IND = 'Y'), ' ') EMAIL,
@@ -791,7 +836,12 @@ PEOPLE AS (
         'Nacogdoches' COUNTY,
         'Nacogdoches' CITY,
         '75962-3940' POSTAL_CODE,
-        'Yes' CREATE_ACCOUNT
+        ' ' EMERGENCY_CONTACT,
+        ' ' OFFICE_PHONE,
+        'Email' PREFERRED_CONTACT_METHOD,
+        ' ' MOBILE_PHONE,
+        'Yes' CREATE_ACOUNT,
+        'Yes' USER_ACTIVE
     FROM DIRECTORS
     UNION
     SELECT ACADEMIC_SU.TITLE,
@@ -800,6 +850,10 @@ PEOPLE AS (
         ACADEMIC_SU.SPRIDEN_LAST_NAME LAST_NAME,
         NVL((SELECT SPBPERS_NAME_PREFIX FROM SPBPERS WHERE SPBPERS_PIDM = ACADEMIC_SU.NBRJOBS_PIDM), ' ') PREFIX,
         NVL((SELECT SPBPERS_NAME_SUFFIX FROM SPBPERS WHERE SPBPERS_PIDM = ACADEMIC_SU.NBRJOBS_PIDM), ' ') SUFFIX,
+        (select distinct nvl(SPBPERS_PREF_FIRST_NAME, ' ') from SPBPERS
+            where spbpers_pidm = (select spriden_pidm from spriden 
+                                    where spriden_id = academic_su.spriden_id 
+                                    and spriden_change_ind is null)) PREFERRED_NAME,
         'Yes' ACTIVE,
         ACADEMIC_SU.SPRIDEN_ID EMPLOYEE_ID,
         NVL((SELECT GOREMAL_EMAIL_ADDRESS FROM GOREMAL WHERE GOREMAL_PIDM = ACADEMIC_SU.NBRJOBS_PIDM AND lower(GOREMAL_EMAIL_ADDRESS) LIKE '%@sfasu.edu' AND GOREMAL_PREFERRED_IND = 'Y'), ' ') EMAIL,
@@ -831,7 +885,12 @@ PEOPLE AS (
         'Nacogdoches' COUNTY,
         'Nacogdoches' CITY,
         '75962-3940' POSTAL_CODE,
-        'Yes' CREATE_ACCOUNT
+        ' ' EMERGENCY_CONTACT,
+        ' ' OFFICE_PHONE,
+        'Email' PREFERRED_CONTACT_METHOD,
+        ' ' MOBILE_PHONE,
+        'Yes' CREATE_ACOUNT,
+        'Yes' USER_ACTIVE
     FROM ACADEMIC_SU
     UNION
     SELECT FACULTY.TITLE TITLE,
@@ -840,6 +899,10 @@ PEOPLE AS (
         FACULTY.SPRIDEN_LAST_NAME LAST_NAME,
         NVL((SELECT SPBPERS_NAME_PREFIX FROM SPBPERS WHERE SPBPERS_PIDM = FACULTY.NBRJOBS_PIDM), ' ') PREFIX,
         NVL((SELECT SPBPERS_NAME_SUFFIX FROM SPBPERS WHERE SPBPERS_PIDM = FACULTY.NBRJOBS_PIDM), ' ') SUFFIX,
+        (select distinct nvl(SPBPERS_PREF_FIRST_NAME, ' ') from SPBPERS
+            where spbpers_pidm = (select spriden_pidm from spriden 
+                                    where spriden_id = faculty.spriden_id 
+                                    and spriden_change_ind is null)) PREFERRED_NAME,
         'Yes' ACTIVE,
         FACULTY.SPRIDEN_ID EMPLOYEE_ID,
         NVL((SELECT GOREMAL_EMAIL_ADDRESS FROM GOREMAL WHERE GOREMAL_PIDM = FACULTY.NBRJOBS_PIDM AND lower(GOREMAL_EMAIL_ADDRESS) LIKE '%@sfasu.edu' AND GOREMAL_PREFERRED_IND = 'Y'), ' ') EMAIL,
@@ -871,7 +934,12 @@ PEOPLE AS (
         'Nacogdoches' COUNTY,
         'Nacogdoches' CITY,
         '75962-3940' POSTAL_CODE,
-        'Yes' CREATE_ACCOUNT
+        ' ' EMERGENCY_CONTACT,
+        ' ' OFFICE_PHONE,
+        'Email' PREFERRED_CONTACT_METHOD,
+        ' ' MOBILE_PHONE,
+        'Yes' CREATE_ACOUNT,
+        'Yes' USER_ACTIVE
     FROM FACULTY
     UNION
     SELECT EMPLOYEE.TITLE TITLE,
@@ -880,6 +948,10 @@ PEOPLE AS (
         EMPLOYEE.SPRIDEN_LAST_NAME LAST_NAME,
         NVL((SELECT SPBPERS_NAME_PREFIX FROM SPBPERS WHERE SPBPERS_PIDM = EMPLOYEE.NBRJOBS_PIDM), ' ') PREFIX,
         NVL((SELECT SPBPERS_NAME_SUFFIX FROM SPBPERS WHERE SPBPERS_PIDM = EMPLOYEE.NBRJOBS_PIDM), ' ') SUFFIX,
+        (select distinct nvl(SPBPERS_PREF_FIRST_NAME, ' ') from SPBPERS
+            where spbpers_pidm = (select spriden_pidm from spriden 
+                                    where spriden_id = employee.spriden_id 
+                                    and spriden_change_ind is null)) PREFERRED_NAME,
         'Yes' ACTIVE,
         EMPLOYEE.SPRIDEN_ID EMPLOYEE_ID,
         NVL((SELECT GOREMAL_EMAIL_ADDRESS FROM GOREMAL WHERE GOREMAL_PIDM = EMPLOYEE.NBRJOBS_PIDM AND lower(GOREMAL_EMAIL_ADDRESS) LIKE '%@sfasu.edu' AND GOREMAL_PREFERRED_IND = 'Y'), ' ') EMAIL,
@@ -911,7 +983,12 @@ PEOPLE AS (
         'Nacogdoches' COUNTY,
         'Nacogdoches' CITY,
         '75962-3940' POSTAL_CODE,
-        'Yes' CREATE_ACCOUNT
+        ' ' EMERGENCY_CONTACT,
+        ' ' OFFICE_PHONE,
+        'Email' PREFERRED_CONTACT_METHOD,
+        ' ' MOBILE_PHONE,
+        'Yes' CREATE_ACOUNT,
+        'Yes' USER_ACTIVE
     FROM EMPLOYEE
     UNION
     SELECT EXECUTIVE_ASSISTANTS.TITLE TITLE,
@@ -920,6 +997,10 @@ PEOPLE AS (
         EXECUTIVE_ASSISTANTS.SPRIDEN_LAST_NAME LAST_NAME,
         NVL((SELECT SPBPERS_NAME_PREFIX FROM SPBPERS WHERE SPBPERS_PIDM = EXECUTIVE_ASSISTANTS.NBRJOBS_PIDM), ' ') PREFIX,
         NVL((SELECT SPBPERS_NAME_SUFFIX FROM SPBPERS WHERE SPBPERS_PIDM = EXECUTIVE_ASSISTANTS.NBRJOBS_PIDM), ' ') SUFFIX,
+        (select distinct nvl(SPBPERS_PREF_FIRST_NAME, ' ') from SPBPERS
+            where spbpers_pidm = (select spriden_pidm from spriden 
+                                    where spriden_id = executive_assistants.spriden_id 
+                                    and spriden_change_ind is null)) PREFERRED_NAME,
         'Yes' ACTIVE,
         EXECUTIVE_ASSISTANTS.SPRIDEN_ID EMPLOYEE_ID,
         NVL((SELECT GOREMAL_EMAIL_ADDRESS FROM GOREMAL WHERE GOREMAL_PIDM = EXECUTIVE_ASSISTANTS.NBRJOBS_PIDM AND lower(GOREMAL_EMAIL_ADDRESS) LIKE '%@sfasu.edu' AND GOREMAL_PREFERRED_IND = 'Y'), ' ') EMAIL,
@@ -951,7 +1032,12 @@ PEOPLE AS (
         'Nacogdoches' COUNTY,
         'Nacogdoches' CITY,
         '75962-3940' POSTAL_CODE,
-        'Yes' CREATE_ACCOUNT
+        ' ' EMERGENCY_CONTACT,
+        ' ' OFFICE_PHONE,
+        'Email' PREFERRED_CONTACT_METHOD,
+        ' ' MOBILE_PHONE,
+        'Yes' CREATE_ACOUNT,
+        'Yes' USER_ACTIVE
     FROM EXECUTIVE_ASSISTANTS
     UNION
     SELECT ASSISTANTS.TITLE TITLE,
@@ -960,6 +1046,10 @@ PEOPLE AS (
         ASSISTANTS.SPRIDEN_LAST_NAME LAST_NAME,
         NVL((SELECT SPBPERS_NAME_PREFIX FROM SPBPERS WHERE SPBPERS_PIDM = ASSISTANTS.NBRJOBS_PIDM), ' ') PREFIX,
         NVL((SELECT SPBPERS_NAME_SUFFIX FROM SPBPERS WHERE SPBPERS_PIDM = ASSISTANTS.NBRJOBS_PIDM), ' ') SUFFIX,
+        (select distinct nvl(SPBPERS_PREF_FIRST_NAME, ' ') from SPBPERS
+            where spbpers_pidm = (select spriden_pidm from spriden 
+                                    where spriden_id = assistants.spriden_id 
+                                    and spriden_change_ind is null)) PREFERRED_NAME,
         'Yes' ACTIVE,
         ASSISTANTS.SPRIDEN_ID EMPLOYEE_ID,
         NVL((SELECT GOREMAL_EMAIL_ADDRESS FROM GOREMAL WHERE GOREMAL_PIDM = ASSISTANTS.NBRJOBS_PIDM AND lower(GOREMAL_EMAIL_ADDRESS) LIKE '%@sfasu.edu' AND GOREMAL_PREFERRED_IND = 'Y'), ' ') EMAIL,
@@ -991,7 +1081,12 @@ PEOPLE AS (
         'Nacogdoches' COUNTY,
         'Nacogdoches' CITY,
         '75962-3940' POSTAL_CODE,
-        'Yes' CREATE_ACCOUNT
+        ' ' EMERGENCY_CONTACT,
+        ' ' OFFICE_PHONE,
+        'Email' PREFERRED_CONTACT_METHOD,
+        ' ' MOBILE_PHONE,
+        'Yes' CREATE_ACOUNT,
+        'Yes' USER_ACTIVE
     FROM ASSISTANTS
     UNION
     SELECT ADMIN.TITLE TITLE,
@@ -1000,6 +1095,10 @@ PEOPLE AS (
         ADMIN.SPRIDEN_LAST_NAME LAST_NAME,
         NVL((SELECT SPBPERS_NAME_PREFIX FROM SPBPERS WHERE SPBPERS_PIDM = ADMIN.NBRJOBS_PIDM), ' ') PREFIX,
         NVL((SELECT SPBPERS_NAME_SUFFIX FROM SPBPERS WHERE SPBPERS_PIDM = ADMIN.NBRJOBS_PIDM), ' ') SUFFIX,
+        (select distinct nvl(SPBPERS_PREF_FIRST_NAME, ' ') from SPBPERS
+            where spbpers_pidm = (select spriden_pidm from spriden 
+                                    where spriden_id = admin.spriden_id 
+                                    and spriden_change_ind is null)) PREFERRED_NAME,
         'Yes' ACTIVE,
         ADMIN.SPRIDEN_ID EMPLOYEE_ID,
         NVL((SELECT GOREMAL_EMAIL_ADDRESS FROM GOREMAL WHERE GOREMAL_PIDM = ADMIN.NBRJOBS_PIDM AND lower(GOREMAL_EMAIL_ADDRESS) LIKE '%@sfasu.edu' AND GOREMAL_PREFERRED_IND = 'Y'), ' ') EMAIL,
@@ -1031,7 +1130,14 @@ PEOPLE AS (
         'Nacogdoches' COUNTY,
         'Nacogdoches' CITY,
         '75962-3940' POSTAL_CODE,
-        'Yes' CREATE_ACOUNT
+        ' ' EMERGENCY_CONTACT,
+        ' ' OFFICE_PHONE,
+        'Email' PREFERRED_CONTACT_METHOD,
+        ' ' MOBILE_PHONE,
+        'Yes' CREATE_ACOUNT,
+        'Yes' USER_ACTIVE
     FROM ADMIN
-) SELECT * FROM PEOPLE
-  ORDER BY TITLE ASC;
+) SELECT * 
+FROM PEOPLE
+WHERE EMAIL IS NOT NULL
+ORDER BY TITLE ASC;
