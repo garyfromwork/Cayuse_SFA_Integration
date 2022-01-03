@@ -1,0 +1,183 @@
+create or replace FUNCTION                   "F_CAYUSE_ORGN_SHORT_NAME" 
+(
+  ORGN_NAME IN VARCHAR2 
+) RETURN VARCHAR2 AS 
+LV_SHORT_NAME VARCHAR2(200) := '';
+LV_RETURN_CODE NUMBER(1) := 2; -- Zero (0) returns no changes needed. One (1) returns changes needed. Assume 2 (NOT USED) until code determines otherwise.
+LV_LOOP_COUNTER NUMBER(2) := 0;
+BEGIN
+DBMS_OUTPUT.ENABLE(NULL);
+LV_SHORT_NAME := ORGN_NAME;
+
+WHILE (LV_RETURN_CODE <> 0 OR LV_LOOP_COUNTER < 20)
+LOOP
+    IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+        LV_RETURN_CODE := 0;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+        IF (LV_SHORT_NAME = 'Office of Diversity, Equity & Inclu') THEN
+            LV_SHORT_NAME := 'Diversity Equity & Inclusion';
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            END IF;
+        ELSIF REGEXP_LIKE(LV_SHORT_NAME, '(*)and(*)') THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'and', '&');
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, '  ', ' ');
+                
+                DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                END IF;
+            END IF;
+        ELSIF REGEXP_LIKE(LV_SHORT_NAME, '(*),(*)') THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, ',', '');
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, '  ', ' ');
+                
+                DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                END IF;
+            END IF;
+        ELSIF (REGEXP_LIKE(LV_SHORT_NAME, '(*)Communications(*)')
+        OR REGEXP_LIKE(LV_SHORT_NAME, '(*)Communication(*)')) THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'Communications', 'Comm');
+                
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                ELSE
+                    LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'Communication', 'Comm');
+                    LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, '  ', ' ');
+                    
+                    DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+                    IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                        LV_RETURN_CODE := 0;
+                    END IF;
+                END IF;
+            END IF;
+        ELSIF REGEXP_LIKE(LV_SHORT_NAME, '(*)Assessment(*)') THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'Assessment', 'Assess');
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, '  ', ' ');
+                
+                
+                DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                END IF;
+            END IF;
+        ELSIF REGEXP_LIKE(LV_SHORT_NAME, '(*)Sciences(*)') THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'Sciences', 'Science');
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, '  ', ' ');
+            
+                DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+            
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                END IF;
+            END IF;
+        ELSIF REGEXP_LIKE(LV_SHORT_NAME, '(*)Astronomy(*)') THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'Astronomy', 'Astron');
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, '  ', ' ');
+            
+                DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+            
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                END IF;
+            END IF;
+        ELSIF REGEXP_LIKE(LV_SHORT_NAME, '(*)University(*)') THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'University', 'Univ');
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, '  ', ' ');
+            
+                DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+            
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                END IF;
+            END IF;
+        ELSIF REGEXP_LIKE(LV_SHORT_NAME, '(*)of(*)') THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'of', '');
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, '  ', ' ');
+            
+                DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+            
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                END IF;
+            END IF;
+        ELSIF REGEXP_LIKE(LV_SHORT_NAME, '(*)Geography(*)') THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'Geography', 'Geog');
+                
+                DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+                
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                ELSE         
+                    IF REGEXP_LIKE(LV_SHORT_NAME, '(*)Sociolo(*)') THEN
+                        IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                            LV_RETURN_CODE := 0;
+                        ELSE
+                            LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'Sociolo', 'Sociology');
+                        END IF;
+                    END IF;
+                END IF;
+            END IF;
+        ELSIF REGEXP_LIKE(LV_SHORT_NAME, '(*)Services(*)') THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'Services', 'Srvcs');
+            
+                DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+            
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                END IF;
+            END IF;
+        ELSIF REGEXP_LIKE(LV_SHORT_NAME, '(*)Procurement(*)') THEN
+            IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                LV_RETURN_CODE := 0;
+            ELSE
+                LV_SHORT_NAME := REPLACE(LV_SHORT_NAME, 'Procurement', 'Proc');
+            
+                DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+            
+                IF (LENGTH(LV_SHORT_NAME) <= 30) THEN
+                    LV_RETURN_CODE := 0;
+                END IF;
+            END IF;
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('SHORT_NAME: ' || LV_SHORT_NAME || ' NORMAL NAME: ' || ORGN_NAME);
+            LV_RETURN_CODE := 0;
+        END IF;
+  LV_LOOP_COUNTER := LV_LOOP_COUNTER + 1;
+END LOOP;
+RETURN LV_SHORT_NAME;
+END F_CAYUSE_ORGN_SHORT_NAME;
