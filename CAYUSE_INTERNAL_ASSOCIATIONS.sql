@@ -17,6 +17,7 @@ WITH primary_posns AS (
         AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
         AND PEBEMPL_EMPL_STATUS <> 'T'
         AND NBRBJOB_CONTRACT_TYPE = 'P'
+	AND NBRJOBS_ECLS_CODE NOT IN ('E2','H2','H4','N2','R0','R2','R4','R6')
         AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
             '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
             '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
@@ -102,6 +103,7 @@ secondary_posns AS (
         AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
         AND PEBEMPL_EMPL_STATUS <> 'T'
         AND NBRBJOB_CONTRACT_TYPE = 'S'
+	AND NBRJOBS_ECLS_CODE NOT IN ('E2','H2','H4','N2','R0','R2','R4','R6')
         AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
             '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
             '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
@@ -973,7 +975,7 @@ SELECT DISTINCT NVL((SELECT distinct GOBTPAC_EXTERNAL_USER FROM gobtpac WHERE GO
        '1936 North Street' PerformanceSiteStreet1,
        ' ' PerformanceSiteStreet2,
        'Nacogdoches' PerformanceSiteCounty,
-       'Nacogdoches' PerformanceSiteCountry,
+       'United States of America' PerformanceSiteCountry,
        'Texas' PerformanceSiteState_Province,
        'Nacogdoches' PerformanceSiteCity,
        '75962-3940' PerformanceSitePostalCode,
