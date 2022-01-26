@@ -1154,7 +1154,7 @@ FROM PEOPLE WHERE PEOPLE.TITLE IN ('DEANS/CHAIRS', 'DIRECTORS')-- SP Proposal Re
 UNION
 SELECT DISTINCT PEOPLE.TITLE, PEOPLE.USERNAME Username,
         'SP Proposal Viewer' Role,
-        PEOPLE.ORG Unit_Primary_Code,
+        ' ' Unit_Primary_Code,
         ' ' IncludeAllSubUnits
 FROM PEOPLE WHERE PEOPLE.TITLE = ANY('PRESIDENT', 'PROVOST', 'VICE_PRESIDENT', 'EXECUTIVE ASSISTANTS') -- President, Provost, all VPs
 UNION
@@ -1179,7 +1179,7 @@ FROM PEOPLE WHERE (PEOPLE.TITLE IN ('DIRECTORS', 'DEANS/CHAIRS')  -- SP Award Re
 UNION
 SELECT DISTINCT PEOPLE.TITLE, PEOPLE.USERNAME Username,
         'SP Award Viewer' Role,
-        PEOPLE.ORG Unit_Primary_Code,
+        ' ' Unit_Primary_Code,
         ' ' IncludeAllSubUnits
 FROM PEOPLE WHERE PEOPLE.TITLE = ANY('PRESIDENT', 'PROVOST', 'VICE_PRESIDENT', 'EXECUTIVE ASSISTANTS') -- President, Provost, all VICE_PRESIDENTs
 UNION
