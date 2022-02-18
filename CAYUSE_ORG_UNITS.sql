@@ -4,10 +4,8 @@ select distinct
     orgn "PrimaryCode",
     ' ' "SecondaryCode",
     (CASE
-        WHEN ORGN IN ('15001') 
-        THEN '11001'
-        WHEN ORGN = '11011'
-        THEN '11001'
+        WHEN ORGN IN ('11001', '11011', '15001')
+        THEN '1'
         WHEN ORGN IN ('15002','15008','20001','29302','30001','40010','50011','57001','90011','95101') 
         THEN '15001'
         WHEN ORGN IN ('20002','20011','20015','20019','20023',
@@ -97,8 +95,9 @@ where ftvorgn_eff_date <= sysdate
 and ftvorgn_nchg_date > sysdate
 and ftvorgn_status_ind = 'A'
 and length(ftvorgn_orgn_code) = 5
-and ftvorgn_orgn_code not in ('11001','11021','20010','20020','2201','22115','22129',
+and ftvorgn_orgn_code not in ('11021','20010','20020','2201','22115','22129',
 '2220','22226','22602','2301','2400','2500','25008','25603','2600','26005','26006',
 '2700','2900','29102','29310','50012','52006','53108','53109','53110','56011','90012','90013',
 '9510','99999')
+and ftvorgn_orgn_code not like '12%'
 order by orgn asc;
