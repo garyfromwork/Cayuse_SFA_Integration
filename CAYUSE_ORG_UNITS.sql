@@ -2,7 +2,7 @@ select distinct
     ftvorgn_title "Name",
     SFADATA.F_CAYUSE_ORGN_SHORT_NAME(FTVORGN_TITLE) AS "ShortName",
     orgn "PrimaryCode",
-    ' ' "SecondaryCode",
+    NULL "SecondaryCode",
     (CASE
         WHEN ORGN IN ('11001', '11011', '15001')
         THEN '1'
@@ -100,4 +100,4 @@ and ftvorgn_orgn_code not in ('11021','20010','20020','2201','22115','22129',
 '2700','2900','29102','29310','50012','52006','53108','53109','53110','56011','90012','90013',
 '9510','99999')
 and ftvorgn_orgn_code not like '12%'
-order by orgn asc;
+order by orgn asc
