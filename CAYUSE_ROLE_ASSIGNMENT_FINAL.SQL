@@ -1175,7 +1175,20 @@ SELECT DISTINCT PEOPLE.TITLE, PEOPLE.USERNAME Username,
         PEOPLE.ORG Unit_Primary_Code,
         ' ' IncludeAllSubUnits
 FROM PEOPLE WHERE (PEOPLE.TITLE IN ('DIRECTORS', 'DEANS/CHAIRS')  -- SP Award Reviewer
-	OR PEOPLE.ORG = '11011')
+--	OR PEOPLE.ORG = '11011')
+)
+UNION
+SELECT DISTINCT PEOPLE.TITLE, PEOPLE.USERNAME Username,
+        'SP Proposal Viewer' Role,
+        ' ' Unit_Primary_Code,
+        ' ' IncludeAllSubUnits
+FROM PEOPLE WHERE PEOPLE.ORG = '11011'
+UNION
+SELECT DISTINCT PEOPLE.TITLE, PEOPLE.USERNAME Username,
+        'SP Award Viewer' Role,
+        ' ' Unit_Primary_Code,
+        ' ' IncludeAllSubUnits
+FROM PEOPLE WHERE PEOPLE.ORG = '11011'
 UNION
 SELECT DISTINCT PEOPLE.TITLE, PEOPLE.USERNAME Username,
         'SP Award Viewer' Role,
