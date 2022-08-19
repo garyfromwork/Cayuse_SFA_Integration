@@ -1,0 +1,376 @@
+WITH primary_posns AS (
+    SELECT
+        Z.*,
+        NBRBJOB.*,
+        C.*,
+        A.*
+    FROM
+        spriden z,
+        nbrbjob,
+        pebempl c,
+        nbrjobs a
+    WHERE
+        a.nbrjobs_pidm = spriden_pidm
+        AND a.nbrjobs_pidm = pebempl_pidm
+        AND a.nbrjobs_pidm = nbrbjob_pidm
+        AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
+        AND PEBEMPL_EMPL_STATUS <> 'T'
+        AND NBRBJOB_CONTRACT_TYPE = 'P'
+        AND NBRJOBS_ECLS_CODE <> 'R0'
+        AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
+            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
+            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
+            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
+            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
+            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
+            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
+        AND a.nbrjobs_status <> 'T'
+        AND nbrbjob_posn = a.nbrjobs_posn
+        AND nbrbjob_suff = a.nbrjobs_suff
+        AND a.nbrjobs_effective_date =(
+            SELECT
+                MAX(nbrjobs_effective_date)
+            FROM
+                nbrjobs
+            WHERE
+                nbrjobs_pidm = a.nbrjobs_pidm
+                AND nbrjobs_posn = a.nbrjobs_posn
+                AND nbrjobs_suff = a.nbrjobs_suff
+                AND nbrjobs_effective_date <= sysdate
+        ) --AND pebempl_empl_status <> 'T'
+        AND pebempl_ecls_code NOT IN(
+            'R0',
+            'S1',
+            'S2',
+            'S3'
+        )
+        AND spriden_pidm IN(
+            SELECT
+                DISTINCT pebempl_pidm
+            FROM
+                pebempl
+            WHERE
+                --pebempl_empl_status <> 'T'
+                (
+                    pebempl_trea_code IS NULL
+                    OR(
+                        pebempl_trea_code IS NOT NULL
+                        AND pebempl_term_date > sysdate
+                    )
+                )
+                AND NOT EXISTS(
+                    SELECT
+                        1
+                    FROM
+                        spriden
+                    WHERE
+                        spriden_pidm = pebempl_pidm
+                        AND spriden_change_ind IS NULL
+                        AND lower(spriden_last_name) LIKE 'xxx%'
+                )
+        )
+        AND spriden_change_ind IS NULL
+        AND nbrbjob_begin_date <= sysdate
+        AND(
+            nbrbjob_end_date IS NULL
+            OR(
+                nbrbjob_end_date IS NOT NULL
+                AND nbrbjob_end_date > sysdate
+            )
+        )
+    ORDER BY
+        spriden_last_name,
+        spriden_mi,
+        spriden_first_name ASC
+),
+secondary_posns AS (
+    SELECT
+        Z.*,
+        NBRBJOB.*,
+        C.*,
+        A.*
+    FROM
+        spriden z,
+        nbrbjob,
+        pebempl c,
+        nbrjobs a
+    WHERE
+        a.nbrjobs_pidm = spriden_pidm
+        AND a.nbrjobs_pidm = pebempl_pidm
+        AND a.nbrjobs_pidm = nbrbjob_pidm
+        AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
+        AND PEBEMPL_EMPL_STATUS <> 'T'
+        AND NBRBJOB_CONTRACT_TYPE = 'S'
+        AND NBRJOBS_ECLS_CODE <> 'R0'
+        AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
+            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
+            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
+            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
+            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
+            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
+            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
+        AND a.nbrjobs_status <> 'T'
+        AND nbrbjob_posn = a.nbrjobs_posn
+        AND nbrbjob_suff = a.nbrjobs_suff
+        AND a.nbrjobs_effective_date =(
+            SELECT
+                MAX(nbrjobs_effective_date)
+            FROM
+                nbrjobs
+            WHERE
+                nbrjobs_pidm = a.nbrjobs_pidm
+                AND nbrjobs_posn = a.nbrjobs_posn
+                AND nbrjobs_suff = a.nbrjobs_suff
+                AND nbrjobs_effective_date <= sysdate
+        ) --AND pebempl_empl_status <> 'T'
+        AND pebempl_ecls_code NOT IN(
+            'R0',
+            'S1',
+            'S2',
+            'S3'
+        )
+        AND spriden_pidm IN(
+            SELECT
+                DISTINCT pebempl_pidm
+            FROM
+                pebempl
+            WHERE
+                --pebempl_empl_status <> 'T'
+                (
+                    pebempl_trea_code IS NULL
+                    OR(
+                        pebempl_trea_code IS NOT NULL
+                        AND pebempl_term_date > sysdate
+                    )
+                )
+                AND NOT EXISTS(
+                    SELECT
+                        1
+                    FROM
+                        spriden
+                    WHERE
+                        spriden_pidm = pebempl_pidm
+                        AND spriden_change_ind IS NULL
+                        AND lower(spriden_last_name) LIKE 'xxx%'
+                )
+        )
+        AND spriden_change_ind IS NULL
+        AND nbrbjob_begin_date <= sysdate
+        AND(
+            nbrbjob_end_date IS NULL
+            OR(
+                nbrbjob_end_date IS NOT NULL
+                AND nbrbjob_end_date > sysdate
+            )
+        )
+    ORDER BY
+        spriden_last_name,
+        spriden_mi,
+        spriden_first_name ASC
+),
+PEOPLE AS (
+	SELECT *
+	FROM PRIMARY_POSNS
+    WHERE PRIMARY_POSNS.NBRJOBS_STATUS = 'A'
+    AND PRIMARY_POSNS.NBRJOBS_EFFECTIVE_DATE <= SYSDATE
+	AND PRIMARY_POSNS.NBRJOBS_EFFECTIVE_DATE = 
+        (SELECT MAX(B.NBRJOBS_EFFECTIVE_DATE) 
+            FROM NBRJOBS B
+            WHERE B.NBRJOBS_PIDM = PRIMARY_POSNS.NBRJOBS_PIDM 
+            AND B.NBRJOBS_SUFF = PRIMARY_POSNS.NBRJOBS_SUFF 
+            AND B.NBRJOBS_POSN = PRIMARY_POSNS.NBRJOBS_POSN
+            AND B.NBRJOBS_STATUS = 'A'
+        )
+),
+SECONDARY_PEOPLE AS (
+    SELECT *
+	FROM SECONDARY_POSNS
+    WHERE SECONDARY_POSNS.NBRJOBS_STATUS = 'A'
+    AND SECONDARY_POSNS.NBRJOBS_EFFECTIVE_DATE <= SYSDATE
+	AND SECONDARY_POSNS.NBRJOBS_EFFECTIVE_DATE = 
+        (SELECT MAX(B.NBRJOBS_EFFECTIVE_DATE) 
+            FROM NBRJOBS B
+            WHERE B.NBRJOBS_PIDM = SECONDARY_POSNS.NBRJOBS_PIDM 
+            AND B.NBRJOBS_SUFF = SECONDARY_POSNS.NBRJOBS_SUFF 
+            AND B.NBRJOBS_POSN = SECONDARY_POSNS.NBRJOBS_POSN
+            AND B.NBRJOBS_STATUS = 'A'
+        )
+),
+RACES AS (
+    SELECT GORPRAC_PIDM,
+        LISTAGG((CASE GORPRAC_RACE_CDE WHEN '4' THEN 'AMERICAN_INDIAN_ALASKA_NATIVE'
+                WHEN '5' THEN 'ASIAN'
+                WHEN '6' THEN 'BLACK_AFRICAN_AMERICAN'
+                WHEN '7' THEN 'NATIVE_HAWAIIAN_PACIFIC_ISLANDER'
+                WHEN '8' THEN 'WHITE'
+                ELSE ' ' END), ' ')
+        WITHIN GROUP (
+            ORDER BY GORPRAC_RACE_CDE
+        ) AS RACE
+    FROM GORPRAC
+    GROUP BY GORPRAC_PIDM
+    ORDER BY GORPRAC_PIDM
+)
+SELECT
+    PEOPLE.SPRIDEN_ID Personnel_Identifier,
+    (case when (nbrjobs_orgn_code_ts in ('20','200','2000','20001')
+        or (select ftvorgn_orgn_code_pred
+            from ftvorgn
+            where ftvorgn_orgn_code = nbrjobs_orgn_code_ts
+            and ftvorgn_eff_date <= sysdate
+            and (ftvorgn_nchg_date is null
+                or ftvorgn_nchg_date > sysdate)
+            and ftvorgn_status_ind = 'A') in ('20','200','2000','20001')
+        ) 
+        and nbrjobs_ecls_code in ('P4','P1')
+      then 'F'
+      when (nbrjobs_orgn_code_ts not in ('20','200','2000','20001')
+        or (select ftvorgn_orgn_code_pred
+            from ftvorgn
+            where ftvorgn_orgn_code = nbrjobs_orgn_code_ts
+            and ftvorgn_eff_date <= sysdate
+            and (ftvorgn_nchg_date is null
+                or ftvorgn_nchg_date > sysdate)
+            and ftvorgn_status_ind = 'A') not in ('20','200','2000','20001')
+        ) 
+        and nbrjobs_ecls_code in ('P4','P1')
+      then 'S'
+      else  DECODE(NBRJOBS_ECLS_CODE, 'S1', 'D',
+                              'S2', 'D',
+                              'S3', 'D',
+                              'F1', 'F',
+                              'F2', 'F',
+                              'F3', 'F',
+                              'P6', 'F',
+                              'P7', 'F',
+                              'P8', 'F',
+                              'P9', 'F',
+                              'R0', 'O',
+                              'R1', 'O',
+                              'R2', 'O',
+                              'R3', 'O',
+                              'R4', 'O',
+                              'R5', 'O',
+                              'R6', 'O',
+                              'E1', 'S',
+                              'E2', 'S',
+                              'H1', 'S',
+                              'H2', 'S',
+                              'H3', 'S',
+                              'H4', 'S',
+                              'N1', 'S',
+                              'N2', 'S',
+                              'E3', 'V', NULL
+    )end) Personnel_Type_Code,
+    NBRJOBS_POSN Person_Title_Code,
+    NBRJOBS_DESC Person_Title_Name,
+    '' Title_Description,
+    NBRJOBS_EFFECTIVE_DATE Start_Date,
+    '' Scheduled_End_Date,
+    '' End_Date,
+    'SFASU' Corporation_Code,
+    NBRJOBS_ORGN_CODE_TS Organization_Unit_Code,
+    '1' Display_Title,
+    '1' Appt_Type,
+    (CASE 
+        WHEN NBRJOBS_POSN LIKE 'E%' 
+            OR NBRJOBS_POSN LIKE 'H%' 
+            OR NBRJOBS_POSN LIKE 'N%' 
+        THEN '12'
+        WHEN NBRJOBS_POSN LIKE 'F%'
+        THEN '9'
+        WHEN NBRJOBS_POSN LIKE 'P%'
+        THEN '3'
+        END) Appointment_Length,
+    (case when nbrjobs_posn like 'HC%' then 'T'
+        when nbrjobs_posn like 'E%' and lower(nbrjobs_posn) like '%temp%' then 'T'
+        when nbrjobs_posn like 'H%'and lower(nbrjobs_posn) like '%temp%' then 'T'
+        else 'P' end) Perm_Temp_Type_ID,
+    (case when NBRJOBS_FTE < 1 THEN 'PT'
+          when NBRJOBS_FTE >= 1 then 'FT'
+          else null end) Full_Part_Type_ID,
+    NBRJOBS_FTE FTE,
+    '' Position_Number
+FROM PEOPLE
+UNION
+SELECT
+    SECONDARY_PEOPLE.SPRIDEN_ID Personnel_Identifier,
+    (case when (nbrjobs_orgn_code_ts in ('20','200','2000','20001')
+        or (select ftvorgn_orgn_code_pred
+            from ftvorgn
+            where ftvorgn_orgn_code = nbrjobs_orgn_code_ts
+            and ftvorgn_eff_date <= sysdate
+            and (ftvorgn_nchg_date is null
+                or ftvorgn_nchg_date > sysdate)
+            and ftvorgn_status_ind = 'A') in ('20','200','2000','20001')
+        ) 
+        and nbrjobs_ecls_code in ('P4','P1')
+      then 'F'
+      when (nbrjobs_orgn_code_ts not in ('20','200','2000','20001')
+        or (select ftvorgn_orgn_code_pred
+            from ftvorgn
+            where ftvorgn_orgn_code = nbrjobs_orgn_code_ts
+            and ftvorgn_eff_date <= sysdate
+            and (ftvorgn_nchg_date is null
+                or ftvorgn_nchg_date > sysdate)
+            and ftvorgn_status_ind = 'A') not in ('20','200','2000','20001')
+        ) 
+        and nbrjobs_ecls_code in ('P4','P1')
+      then 'S'
+      else  DECODE(NBRJOBS_ECLS_CODE, 'S1', 'D',
+                              'S2', 'D',
+                              'S3', 'D',
+                              'F1', 'F',
+                              'F2', 'F',
+                              'F3', 'F',
+                              'P6', 'F',
+                              'P7', 'F',
+                              'P8', 'F',
+                              'P9', 'F',
+                              'R0', 'O',
+                              'R1', 'O',
+                              'R2', 'O',
+                              'R3', 'O',
+                              'R4', 'O',
+                              'R5', 'O',
+                              'R6', 'O',
+                              'E1', 'S',
+                              'E2', 'S',
+                              'H1', 'S',
+                              'H2', 'S',
+                              'H3', 'S',
+                              'H4', 'S',
+                              'N1', 'S',
+                              'N2', 'S',
+                              'E3', 'V', NULL
+    )end) Personnel_Type_Code,
+    NBRJOBS_POSN Person_Title_Code,
+    NBRJOBS_DESC Person_Title_Name,
+    '' Title_Description,
+    NBRJOBS_EFFECTIVE_DATE Start_Date,
+    '' Scheduled_End_Date,
+    '' End_Date,
+    'SFASU' Corporation_Code,
+    NBRJOBS_ORGN_CODE_TS Organization_Unit_Code,
+    '2' Display_Title,
+    '2' Appt_Type,
+    (CASE 
+        WHEN NBRJOBS_POSN LIKE 'E%' 
+            OR NBRJOBS_POSN LIKE 'H%' 
+            OR NBRJOBS_POSN LIKE 'N%' 
+        THEN '12'
+        WHEN NBRJOBS_POSN LIKE 'F%'
+        THEN '9'
+        WHEN NBRJOBS_POSN LIKE 'P%'
+        THEN '3'
+        END) Appointment_Length,
+    (case when nbrjobs_posn like 'HC%' then 'T'
+        when nbrjobs_posn like 'E%' and lower(nbrjobs_posn) like '%temp%' then 'T'
+        when nbrjobs_posn like 'H%'and lower(nbrjobs_posn) like '%temp%' then 'T'
+        else 'P' end) Perm_Temp_Type_ID,
+    (case when NBRJOBS_FTE < 1 THEN 'PT'
+          when NBRJOBS_FTE >= 1 then 'FT'
+          else null end) Full_Part_Type_ID,
+    NBRJOBS_FTE FTE,
+    '' Position_Number
+FROM SECONDARY_PEOPLE;
