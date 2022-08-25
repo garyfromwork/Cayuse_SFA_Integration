@@ -16,14 +16,6 @@ WITH primary_posns AS (
         AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
         AND PEBEMPL_EMPL_STATUS <> 'T'
         AND NBRBJOB_CONTRACT_TYPE = 'P'
-        AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-        AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
         AND a.nbrjobs_status <> 'T'
         AND nbrbjob_posn = a.nbrjobs_posn
         AND nbrbjob_suff = a.nbrjobs_suff
@@ -37,7 +29,7 @@ WITH primary_posns AS (
                 AND nbrjobs_posn = a.nbrjobs_posn
                 AND nbrjobs_suff = a.nbrjobs_suff
                 AND nbrjobs_effective_date <= sysdate
-        ) --AND pebempl_empl_status <> 'T'
+        )
         AND pebempl_ecls_code NOT IN(
             'R0',
             'S1',
@@ -50,7 +42,6 @@ WITH primary_posns AS (
             FROM
                 pebempl
             WHERE
-                --pebempl_empl_status <> 'T'
                 (
                     pebempl_trea_code IS NULL
                     OR(
@@ -78,10 +69,77 @@ WITH primary_posns AS (
                 AND nbrbjob_end_date > sysdate
             )
         )
-    ORDER BY
-        spriden_last_name,
-        spriden_mi,
-        spriden_first_name ASC
+    union
+    SELECT
+        Z.*,
+        NBRBJOB.*,
+        C.*,
+        A.*
+    FROM
+        spriden z,
+        nbrbjob,
+        pebempl c,
+        nbrjobs a
+    WHERE
+        a.nbrjobs_pidm = spriden_pidm
+        AND a.nbrjobs_pidm = pebempl_pidm
+        AND a.nbrjobs_pidm = nbrbjob_pidm
+        AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
+        AND PEBEMPL_PIDM = '10455795'
+        AND PEBEMPL_EMPL_STATUS <> 'T'
+        AND NBRBJOB_CONTRACT_TYPE = 'S'
+        AND a.nbrjobs_status <> 'T'
+        AND nbrbjob_posn = a.nbrjobs_posn
+        AND nbrbjob_suff = a.nbrjobs_suff
+        AND a.nbrjobs_effective_date =(
+            SELECT
+                MAX(nbrjobs_effective_date)
+            FROM
+                nbrjobs
+            WHERE
+                nbrjobs_pidm = a.nbrjobs_pidm
+                AND nbrjobs_posn = a.nbrjobs_posn
+                AND nbrjobs_suff = a.nbrjobs_suff
+                AND nbrjobs_effective_date <= sysdate
+        )
+        AND pebempl_ecls_code NOT IN(
+            'S1',
+            'S2',
+            'S3'
+        )
+        AND spriden_pidm IN(
+            SELECT
+                DISTINCT pebempl_pidm
+            FROM
+                pebempl
+            WHERE
+                (
+                    pebempl_trea_code IS NULL
+                    OR(
+                        pebempl_trea_code IS NOT NULL
+                        AND pebempl_term_date > sysdate
+                    )
+                )
+                AND NOT EXISTS(
+                    SELECT
+                        1
+                    FROM
+                        spriden
+                    WHERE
+                        spriden_pidm = pebempl_pidm
+                        AND spriden_change_ind IS NULL
+                        AND lower(spriden_last_name) LIKE 'xxx%'
+                )
+        )
+        AND spriden_change_ind IS NULL
+        AND nbrbjob_begin_date <= sysdate
+        AND(
+            nbrbjob_end_date IS NULL
+            OR(
+                nbrbjob_end_date IS NOT NULL
+                AND nbrbjob_end_date > sysdate
+            )
+        )
 ),
 secondary_posns AS (
     SELECT
@@ -98,17 +156,9 @@ secondary_posns AS (
         a.nbrjobs_pidm = spriden_pidm
         AND a.nbrjobs_pidm = pebempl_pidm
         AND a.nbrjobs_pidm = nbrbjob_pidm
-        AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
+        AND PEBEMPL_INTERNAL_FT_PT_IND <> 'F'
         AND PEBEMPL_EMPL_STATUS <> 'T'
         AND NBRBJOB_CONTRACT_TYPE = 'S'
-        AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-        AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
         AND a.nbrjobs_status <> 'T'
         AND nbrbjob_posn = a.nbrjobs_posn
         AND nbrbjob_suff = a.nbrjobs_suff
@@ -122,7 +172,7 @@ secondary_posns AS (
                 AND nbrjobs_posn = a.nbrjobs_posn
                 AND nbrjobs_suff = a.nbrjobs_suff
                 AND nbrjobs_effective_date <= sysdate
-        ) --AND pebempl_empl_status <> 'T'
+        )
         AND pebempl_ecls_code NOT IN(
             'R0',
             'S1',
@@ -135,7 +185,6 @@ secondary_posns AS (
             FROM
                 pebempl
             WHERE
-                --pebempl_empl_status <> 'T'
                 (
                     pebempl_trea_code IS NULL
                     OR(
@@ -184,7 +233,8 @@ RAW_PRESIDENT AS (
             AND B.NBRJOBS_SUFF = PRIMARY_POSNS.NBRJOBS_SUFF 
             AND B.NBRJOBS_POSN = PRIMARY_POSNS.NBRJOBS_POSN
             AND B.NBRJOBS_STATUS = 'A'
-            AND UPPER(B.NBRJOBS_DESC) LIKE 'PRESIDENT'
+            AND (UPPER(B.NBRJOBS_DESC) LIKE 'PRESIDENT'  
+                OR UPPER(B.NBRJOBS_DESC) LIKE 'INTERIM PRESIDENT')
         )
     AND (UPPER(PRIMARY_POSNS.NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(PRIMARY_POSNS.NBRJOBS_DESC) NOT LIKE '%ADJCT%'
@@ -464,7 +514,7 @@ RAW_EMPLOYEE AS (
     FROM PRIMARY_POSNS
     WHERE NBRJOBS_STATUS = 'A'
 	AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
-	AND NBRJOBS_POSN LIKE 'E%'
+	AND NBRJOBS_POSN LIKE 'E%' OR NBRJOBS_POSN LIKE 'H%' OR NBRJOBS_POSN LIKE 'N%'
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASST%')
@@ -693,7 +743,7 @@ PEOPLE AS (
         ' ' OFFICE_PHONE,
         'Email' PREFERRED_CONTACT_METHOD,
         ' ' MOBILE_PHONE,
-        'Yes' CREATE_ACCOUNT,
+        'Yes' CREATE_ACOUNT,
         'Yes' USER_ACTIVE
     FROM PRESIDENT
     UNION 
@@ -742,7 +792,7 @@ PEOPLE AS (
         ' ' OFFICE_PHONE,
         'Email' PREFERRED_CONTACT_METHOD,
         ' ' MOBILE_PHONE,
-        'Yes' CREATE_ACCOUNT,
+        'Yes' CREATE_ACOUNT,
         'Yes' USER_ACTIVE
     FROM VP
     UNION
@@ -791,7 +841,7 @@ PEOPLE AS (
         ' ' OFFICE_PHONE,
         'Email' PREFERRED_CONTACT_METHOD,
         ' ' MOBILE_PHONE,
-        'Yes' CREATE_ACCOUNT,
+        'Yes' CREATE_ACOUNT,
         'Yes' USER_ACTIVE
     FROM PROVOST
     UNION
@@ -840,7 +890,7 @@ PEOPLE AS (
         ' ' OFFICE_PHONE,
         'Email' PREFERRED_CONTACT_METHOD,
         ' ' MOBILE_PHONE,
-        'Yes' CREATE_ACCOUNT,
+        'Yes' CREATE_ACOUNT,
         'Yes' USER_ACTIVE
     FROM DIRECTORS
     UNION
@@ -889,7 +939,7 @@ PEOPLE AS (
         ' ' OFFICE_PHONE,
         'Email' PREFERRED_CONTACT_METHOD,
         ' ' MOBILE_PHONE,
-        'Yes' CREATE_ACCOUNT,
+        'Yes' CREATE_ACOUNT,
         'Yes' USER_ACTIVE
     FROM ACADEMIC_SU
     UNION
@@ -938,7 +988,7 @@ PEOPLE AS (
         ' ' OFFICE_PHONE,
         'Email' PREFERRED_CONTACT_METHOD,
         ' ' MOBILE_PHONE,
-        'Yes' CREATE_ACCOUNT,
+        'Yes' CREATE_ACOUNT,
         'Yes' USER_ACTIVE
     FROM FACULTY
     UNION
@@ -987,7 +1037,7 @@ PEOPLE AS (
         ' ' OFFICE_PHONE,
         'Email' PREFERRED_CONTACT_METHOD,
         ' ' MOBILE_PHONE,
-        'Yes' CREATE_ACCOUNT,
+        'Yes' CREATE_ACOUNT,
         'Yes' USER_ACTIVE
     FROM EMPLOYEE
     UNION
@@ -1036,7 +1086,7 @@ PEOPLE AS (
         ' ' OFFICE_PHONE,
         'Email' PREFERRED_CONTACT_METHOD,
         ' ' MOBILE_PHONE,
-        'Yes' CREATE_ACCOUNT,
+        'Yes' CREATE_ACOUNT,
         'Yes' USER_ACTIVE
     FROM EXECUTIVE_ASSISTANTS
     UNION
@@ -1085,7 +1135,7 @@ PEOPLE AS (
         ' ' OFFICE_PHONE,
         'Email' PREFERRED_CONTACT_METHOD,
         ' ' MOBILE_PHONE,
-        'Yes' CREATE_ACCOUNT,
+        'Yes' CREATE_ACOUNT,
         'Yes' USER_ACTIVE
     FROM ASSISTANTS
     UNION
@@ -1134,48 +1184,10 @@ PEOPLE AS (
         ' ' OFFICE_PHONE,
         'Email' PREFERRED_CONTACT_METHOD,
         ' ' MOBILE_PHONE,
-        'Yes' CREATE_ACCOUNT,
+        'Yes' CREATE_ACOUNT,
         'Yes' USER_ACTIVE
     FROM ADMIN
-) 
-SELECT FIRST_NAME,
-    MIDDLE_NAME,
-    LAST_NAME,
-    PREFIX,
-    SUFFIX,
-    PREFERRED_NAME,
-    ACTIVE,
-    EMPLOYEE_ID,
-    EMAIL,
-    USERNAME,
-    NIH_COMMONS_ID,
-    NSF_ID,
-    NASA_NSPIRES_ID,
-    ORCID_ID,
-    DEGREE_DESCRIPTION,
-    DEGREE_YEAR,
-    DEGREE_QUALIFICATIONS,
-    GENDER,
-    ETHNICITY,
-    RACES,
-    DISABILITIES,
-    CITIZENSHIP,
-    PHONE,
-    FAX,
-    STREET_1,
-    STREET_2,
-    COUNTRY,
-    STATE_PROVINCE,
-    COUNTY,
-    CITY,
-    POSTAL_CODE,
-    EMERGENCY_CONTACT,
-    OFFICE_PHONE,
-    PREFERRED_CONTACT_METHOD,
-    MOBILE_PHONE,
-    CREATE_ACCOUNT,
-    USER_ACTIVE
+) SELECT * 
 FROM PEOPLE
 WHERE EMAIL IS NOT NULL
-AND EMPLOYEE_ID NOT IN  ('20390500', '10109977', '20368925')
-ORDER BY TITLE ASC;
+ORDER BY FIRST_NAME ASC, LAST_NAME ASC;
