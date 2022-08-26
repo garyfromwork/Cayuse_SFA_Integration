@@ -16,14 +16,6 @@ WITH primary_posns AS (
         AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
         AND PEBEMPL_EMPL_STATUS <> 'T'
         AND NBRBJOB_CONTRACT_TYPE = 'P'
---        AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-        AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
         AND a.nbrjobs_status <> 'T'
         AND nbrbjob_posn = a.nbrjobs_posn
         AND nbrbjob_suff = a.nbrjobs_suff
@@ -37,7 +29,7 @@ WITH primary_posns AS (
                 AND nbrjobs_posn = a.nbrjobs_posn
                 AND nbrjobs_suff = a.nbrjobs_suff
                 AND nbrjobs_effective_date <= sysdate
-        ) --AND pebempl_empl_status <> 'T'
+        )
         AND pebempl_ecls_code NOT IN(
             'R0',
             'S1',
@@ -50,7 +42,6 @@ WITH primary_posns AS (
             FROM
                 pebempl
             WHERE
-                --pebempl_empl_status <> 'T'
                 (
                     pebempl_trea_code IS NULL
                     OR(
@@ -78,10 +69,77 @@ WITH primary_posns AS (
                 AND nbrbjob_end_date > sysdate
             )
         )
-    ORDER BY
-        spriden_last_name,
-        spriden_mi,
-        spriden_first_name ASC
+    union
+    SELECT
+        Z.*,
+        NBRBJOB.*,
+        C.*,
+        A.*
+    FROM
+        spriden z,
+        nbrbjob,
+        pebempl c,
+        nbrjobs a
+    WHERE
+        a.nbrjobs_pidm = spriden_pidm
+        AND a.nbrjobs_pidm = pebempl_pidm
+        AND a.nbrjobs_pidm = nbrbjob_pidm
+        AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
+        AND PEBEMPL_PIDM = '10455795'
+        AND PEBEMPL_EMPL_STATUS <> 'T'
+        AND NBRBJOB_CONTRACT_TYPE = 'S'
+        AND a.nbrjobs_status <> 'T'
+        AND nbrbjob_posn = a.nbrjobs_posn
+        AND nbrbjob_suff = a.nbrjobs_suff
+        AND a.nbrjobs_effective_date =(
+            SELECT
+                MAX(nbrjobs_effective_date)
+            FROM
+                nbrjobs
+            WHERE
+                nbrjobs_pidm = a.nbrjobs_pidm
+                AND nbrjobs_posn = a.nbrjobs_posn
+                AND nbrjobs_suff = a.nbrjobs_suff
+                AND nbrjobs_effective_date <= sysdate
+        )
+        AND pebempl_ecls_code NOT IN(
+            'S1',
+            'S2',
+            'S3'
+        )
+        AND spriden_pidm IN(
+            SELECT
+                DISTINCT pebempl_pidm
+            FROM
+                pebempl
+            WHERE
+                (
+                    pebempl_trea_code IS NULL
+                    OR(
+                        pebempl_trea_code IS NOT NULL
+                        AND pebempl_term_date > sysdate
+                    )
+                )
+                AND NOT EXISTS(
+                    SELECT
+                        1
+                    FROM
+                        spriden
+                    WHERE
+                        spriden_pidm = pebempl_pidm
+                        AND spriden_change_ind IS NULL
+                        AND lower(spriden_last_name) LIKE 'xxx%'
+                )
+        )
+        AND spriden_change_ind IS NULL
+        AND nbrbjob_begin_date <= sysdate
+        AND(
+            nbrbjob_end_date IS NULL
+            OR(
+                nbrbjob_end_date IS NOT NULL
+                AND nbrbjob_end_date > sysdate
+            )
+        )
 ),
 secondary_posns AS (
     SELECT
@@ -98,17 +156,9 @@ secondary_posns AS (
         a.nbrjobs_pidm = spriden_pidm
         AND a.nbrjobs_pidm = pebempl_pidm
         AND a.nbrjobs_pidm = nbrbjob_pidm
-        AND PEBEMPL_INTERNAL_FT_PT_IND <> 'P'
+        AND PEBEMPL_INTERNAL_FT_PT_IND <> 'F'
         AND PEBEMPL_EMPL_STATUS <> 'T'
         AND NBRBJOB_CONTRACT_TYPE = 'S'
-        AND NBRJOBS_ECLS_CODE NOT IN ('E2','F3','H2','H4','N2','R0','R2','R4','R6')
-        AND NBRJOBS_ORGN_CODE_TS NOT IN ('11001','11021','20023','20026','22129','22226','24209',
-            '25008','25914','26050','26414','26510','29002','29003','29007','29011','29012',
-            '29013','29304','29310','29311','30204','30205','30206','30209','30210','30212',
-            '30232','30249','30251','30254','30257','30258','30501','30601','40017','52002',
-            '52005','52006','52109','52201','52302','52303','53110','53701','54011','80010',
-            '90011','90012','90016','95102','95113','95401','95601','96021','96031','96041',
-            '96051','96061','97021','97031','97041','97051','97061','97071','97081','97091','97101')
         AND a.nbrjobs_status <> 'T'
         AND nbrbjob_posn = a.nbrjobs_posn
         AND nbrbjob_suff = a.nbrjobs_suff
@@ -122,7 +172,7 @@ secondary_posns AS (
                 AND nbrjobs_posn = a.nbrjobs_posn
                 AND nbrjobs_suff = a.nbrjobs_suff
                 AND nbrjobs_effective_date <= sysdate
-        ) --AND pebempl_empl_status <> 'T'
+        )
         AND pebempl_ecls_code NOT IN(
             'R0',
             'S1',
@@ -135,7 +185,6 @@ secondary_posns AS (
             FROM
                 pebempl
             WHERE
-                --pebempl_empl_status <> 'T'
                 (
                     pebempl_trea_code IS NULL
                     OR(
@@ -184,7 +233,8 @@ RAW_PRESIDENT AS (
             AND B.NBRJOBS_SUFF = PRIMARY_POSNS.NBRJOBS_SUFF 
             AND B.NBRJOBS_POSN = PRIMARY_POSNS.NBRJOBS_POSN
             AND B.NBRJOBS_STATUS = 'A'
-            AND UPPER(B.NBRJOBS_DESC) LIKE 'PRESIDENT'
+            AND (UPPER(B.NBRJOBS_DESC) LIKE 'PRESIDENT'  
+                OR UPPER(B.NBRJOBS_DESC) LIKE 'INTERIM PRESIDENT')
         )
     AND (UPPER(PRIMARY_POSNS.NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(PRIMARY_POSNS.NBRJOBS_DESC) NOT LIKE '%ADJCT%'
@@ -388,7 +438,6 @@ RAW_ACADEMIC_SU AS (
     FROM SECONDARY_POSNS
     WHERE NBRJOBS_STATUS = 'A'
 	AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
---    AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ASST%')
 	AND (UPPER(NBRJOBS_DESC) LIKE '%CHAIR%' 
         OR UPPER(NBRJOBS_DESC) LIKE '%DEAN%' 
         OR UPPER(NBRJOBS_DESC) LIKE '%INTERIM CHAIR%'
@@ -443,18 +492,13 @@ FACULTY AS (
                                                 FROM RAW_FACULTY A 
                                                 WHERE A.NBRJOBS_PIDM = RAW_FACULTY.NBRJOBS_PIDM 
                                                 AND A.NBRJOBS_POSN = RAW_FACULTY.NBRJOBS_POSN)
---    AND NOT EXISTS (SELECT PRESIDENT.SPRIDEN_ID FROM PRESIDENT WHERE RAW_FACULTY.SPRIDEN_ID = PRESIDENT.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT VP.SPRIDEN_ID FROM VP WHERE RAW_FACULTY.SPRIDEN_ID = VP.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT PROVOST.SPRIDEN_ID FROM PROVOST WHERE RAW_FACULTY.SPRIDEN_ID = PROVOST.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT DIRECTORS.SPRIDEN_ID FROM DIRECTORS WHERE RAW_FACULTY.SPRIDEN_ID = DIRECTORS.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT ACADEMIC_SU.SPRIDEN_ID FROM ACADEMIC_SU WHERE RAW_FACULTY.SPRIDEN_ID = ACADEMIC_SU.SPRIDEN_ID)
 ),
 RAW_EMPLOYEE AS (
     SELECT *
     FROM PRIMARY_POSNS
     WHERE NBRJOBS_STATUS = 'A'
 	AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
-	AND NBRJOBS_POSN LIKE 'E%'
+	AND NBRJOBS_POSN LIKE 'E%' OR NBRJOBS_POSN LIKE 'H%' OR NBRJOBS_POSN LIKE 'N%'
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASST%')
@@ -467,7 +511,7 @@ RAW_EMPLOYEE AS (
     FROM SECONDARY_POSNS
     WHERE NBRJOBS_STATUS = 'A'
 	AND NBRJOBS_EFFECTIVE_DATE <= SYSDATE
-	AND NBRJOBS_POSN LIKE 'E%'
+	AND NBRJOBS_POSN LIKE 'E%' OR NBRJOBS_POSN LIKE 'H%' OR NBRJOBS_POSN LIKE 'N%'
     AND (UPPER(NBRJOBS_DESC) NOT LIKE '%ADJUNCT%' 
         AND UPPER(NBRJOBS_DESC) NOT LIKE '%ADJCT%'
         AND UPPER(NBRJOBS_DESC) NOT LIKE UPPER('%EXECUTIVE%ASST%')
@@ -482,12 +526,6 @@ EMPLOYEE AS (
                                                     FROM RAW_EMPLOYEE A 
                                                     WHERE A.NBRJOBS_PIDM = RAW_EMPLOYEE.NBRJOBS_PIDM
                                                     AND A.NBRJOBS_POSN = RAW_EMPLOYEE.NBRJOBS_POSN)
---    AND NOT EXISTS (SELECT PRESIDENT.SPRIDEN_ID FROM PRESIDENT WHERE RAW_EMPLOYEE.SPRIDEN_ID = PRESIDENT.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT VP.SPRIDEN_ID FROM VP WHERE RAW_EMPLOYEE.SPRIDEN_ID = VP.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT PROVOST.SPRIDEN_ID FROM PROVOST WHERE RAW_EMPLOYEE.SPRIDEN_ID = PROVOST.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT DIRECTORS.SPRIDEN_ID FROM DIRECTORS WHERE RAW_EMPLOYEE.SPRIDEN_ID = DIRECTORS.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT ACADEMIC_SU.SPRIDEN_ID FROM ACADEMIC_SU WHERE RAW_EMPLOYEE.SPRIDEN_ID = ACADEMIC_SU.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT FACULTY.SPRIDEN_ID FROM FACULTY WHERE RAW_EMPLOYEE.SPRIDEN_ID = FACULTY.SPRIDEN_ID)
 ),
 RAW_EXECUTIVE_ASSISTANTS AS (
     SELECT * 
@@ -568,14 +606,6 @@ ASSISTANTS AS (
                                                     FROM RAW_ASSISTANTS A 
                                                     WHERE A.NBRJOBS_PIDM = RAW_ASSISTANTS.NBRJOBS_PIDM
                                                     AND A.NBRJOBS_POSN = RAW_ASSISTANTS.NBRJOBS_POSN)
---    AND NOT EXISTS (SELECT PRESIDENT.SPRIDEN_ID FROM PRESIDENT WHERE RAW_ASSISTANTS.SPRIDEN_ID = PRESIDENT.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT VP.SPRIDEN_ID FROM VP WHERE RAW_ASSISTANTS.SPRIDEN_ID = VP.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT PROVOST.SPRIDEN_ID FROM PROVOST WHERE RAW_ASSISTANTS.SPRIDEN_ID = PROVOST.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT DIRECTORS.SPRIDEN_ID FROM DIRECTORS WHERE RAW_ASSISTANTS.SPRIDEN_ID = DIRECTORS.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT ACADEMIC_SU.SPRIDEN_ID FROM ACADEMIC_SU WHERE RAW_ASSISTANTS.SPRIDEN_ID = ACADEMIC_SU.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT FACULTY.SPRIDEN_ID FROM FACULTY WHERE RAW_ASSISTANTS.SPRIDEN_ID = FACULTY.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT EMPLOYEE.SPRIDEN_ID FROM EMPLOYEE WHERE RAW_ASSISTANTS.SPRIDEN_ID = EMPLOYEE.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT EXECUTIVE_ASSISTANTS.SPRIDEN_ID FROM EXECUTIVE_ASSISTANTS WHERE RAW_ASSISTANTS.SPRIDEN_ID = EXECUTIVE_ASSISTANTS.SPRIDEN_ID)
 ),
 RAW_ADMIN AS (
     SELECT * 
@@ -613,15 +643,6 @@ ADMIN AS (
     WHERE RAW_ADMIN.NBRJOBS_EFFECTIVE_DATE = (SELECT MAX(NBRJOBS_EFFECTIVE_DATE) FROM RAW_ADMIN A
                                                 WHERE RAW_ADMIN.NBRJOBS_PIDM = A.NBRJOBS_PIDM
                                                 AND RAW_ADMIN.NBRJOBS_POSN = A.NBRJOBS_POSN)
---    AND NOT EXISTS (SELECT PRESIDENT.SPRIDEN_ID FROM PRESIDENT WHERE RAW_ADMIN.SPRIDEN_ID = PRESIDENT.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT VP.SPRIDEN_ID FROM VP WHERE RAW_ADMIN.SPRIDEN_ID = VP.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT PROVOST.SPRIDEN_ID FROM PROVOST WHERE RAW_ADMIN.SPRIDEN_ID = PROVOST.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT DIRECTORS.SPRIDEN_ID FROM DIRECTORS WHERE RAW_ADMIN.SPRIDEN_ID = DIRECTORS.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT ACADEMIC_SU.SPRIDEN_ID FROM ACADEMIC_SU WHERE RAW_ADMIN.SPRIDEN_ID = ACADEMIC_SU.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT FACULTY.SPRIDEN_ID FROM FACULTY WHERE RAW_ADMIN.SPRIDEN_ID = FACULTY.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT EMPLOYEE.SPRIDEN_ID FROM EMPLOYEE WHERE RAW_ADMIN.SPRIDEN_ID = EMPLOYEE.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT EXECUTIVE_ASSISTANTS.SPRIDEN_ID FROM EXECUTIVE_ASSISTANTS WHERE RAW_ADMIN.SPRIDEN_ID = EXECUTIVE_ASSISTANTS.SPRIDEN_ID)
---    AND NOT EXISTS (SELECT ASSISTANTS.SPRIDEN_ID FROM ASSISTANTS WHERE RAW_ADMIN.SPRIDEN_ID = ASSISTANTS.SPRIDEN_ID)
 ),
 RACES AS (
     SELECT GORPRAC_PIDM,
