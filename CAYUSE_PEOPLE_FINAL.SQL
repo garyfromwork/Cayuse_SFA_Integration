@@ -158,7 +158,7 @@ secondary_posns AS (
         AND a.nbrjobs_pidm = nbrbjob_pidm
         AND PEBEMPL_INTERNAL_FT_PT_IND <> 'F'
         AND PEBEMPL_EMPL_STATUS <> 'T'
-        AND NBRBJOB_CONTRACT_TYPE = 'S'
+--        AND NBRBJOB_CONTRACT_TYPE = 'S'
         AND a.nbrjobs_status <> 'T'
         AND nbrbjob_posn = a.nbrjobs_posn
         AND nbrbjob_suff = a.nbrjobs_suff
