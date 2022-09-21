@@ -1,0 +1,248 @@
+with farinva_codes as (
+    select distinct farinva_fund_code
+    from farinva
+    where (
+        farinva_fund_code in (
+            '150030','150040','150045','107600','150600','310600'
+        )
+        or (
+            farinva_fund_code like '2_____'
+            and '21' in (
+                select ftvfund_ftyp_code
+                from ftvfund
+                where ftvfund_fund_code = farinva_fund_code
+                and ftvfund_eff_date <= sysdate
+                and (ftvfund_nchg_date is null
+                    or ftvfund_nchg_date > sysdate)
+            )
+        )
+    )
+    union
+    select ftvfund_fund_code farinva_fund_code
+    from ftvfund
+    where ftvfund_fund_code in ('150600','310600')
+    order by farinva_fund_code asc
+),
+active_funds as (
+    select distinct farinva_fund_code,
+        a.ftvfund_grnt_code,
+        a.ftvfund_title,
+        a.ftvfund_eff_date,
+        a.ftvfund_nchg_date,
+        a.ftvfund_term_date,
+        a.ftvfund_expend_end_date,
+        a.ftvfund_status_ind
+    from farinva_codes
+    inner join ftvfund a
+        on a.ftvfund_fund_code = farinva_fund_code
+        and a.ftvfund_eff_date <= sysdate
+        and a.ftvfund_nchg_date > sysdate
+        and (
+                (
+                    a.ftvfund_expend_end_date is null
+                    or to_date(a.ftvfund_expend_end_date, 'dd-mon-yy') > to_date(sysdate, 'dd-mon-yy')
+                )
+                and (
+                    a.ftvfund_term_date is null
+                    or to_date(a.ftvfund_term_date, 'dd-mon-yy') > to_date(sysdate, 'dd-mon-yy')
+                )
+        )
+    order by farinva_fund_code asc, ftvfund_grnt_code asc
+),
+multiyear_grants as (
+    select distinct a.ftvfund_fund_code, a.ftvfund_title, a.ftvfund_grnt_code
+    from ftvfund a, active_funds
+    where a.ftvfund_fund_code in (
+        select active_funds.farinva_fund_code
+        from active_funds
+        where active_funds.farinva_fund_code not like '_____1'
+        and active_funds.farinva_fund_code not like '_____0'
+    )
+),
+final_multiyear_grants as (
+    select distinct 'Multiyear-Grant',
+        a.ftvfund_fund_code,
+        a.ftvfund_grnt_code,
+        a.ftvfund_title,
+        a.ftvfund_status_ind,
+        max(a.ftvfund_nchg_date) as "max_nchg_date",
+        max(a.ftvfund_eff_date) as "max_eff_date",
+        max(a.ftvfund_term_date) as "max_term_date",
+        max(a.ftvfund_expend_end_date) as "max_end_date"
+    from ftvfund a
+    left join ftvfund b
+        on b.ftvfund_fund_code = a.ftvfund_fund_code
+        and b.ftvfund_status_ind = a.ftvfund_status_ind
+    where a.ftvfund_grnt_code in (
+        select ftvfund_grnt_code
+        from multiyear_grants
+    )
+    group by 'Multiyear-Grant',
+        a.ftvfund_fund_code,
+        a.ftvfund_grnt_code,
+        a.ftvfund_title,
+        a.ftvfund_status_ind
+),
+all_funds as (
+    select distinct 'Regular-Grants' Grant_Type,
+        frbgrnt_code,
+        frbgrnt_title,
+        farinva_fund_code Fund_Code,
+        a.ftvfund_title Fund_Name,
+        a.ftvfund_fund_code_pred Fund_Type_Code,
+        (select ftvfund_title
+            from ftvfund
+            where ftvfund_fund_code = a.ftvfund_fund_code_pred
+            and ftvfund_eff_date <= sysdate
+            and (
+                ftvfund_nchg_date > sysdate
+                or ftvfund_nchg_date is null
+            )
+        ) Fund_Type_Name,
+        (Case
+            when a.ftvfund_term_date is null
+                and a.ftvfund_expend_end_date is null
+            then 'A'
+            when a.ftvfund_term_date <= sysdate
+            or a.ftvfund_expend_end_date <= sysdate
+            then 'T'
+            else null end
+        ) Status,
+        frbgrnt_project_start_date Budget_Start_Date,
+        frbgrnt_project_end_date Budget_End_Date,
+        frbgrnt_project_start_date Project_Start_Date,
+        frbgrnt_project_end_date Project_End_Date,
+        (select spriden_id
+            from spriden
+            where spriden_pidm = frbgrnt_pi_pidm
+            and spriden_change_ind is null
+        ) Account_Responsible_Investigator,
+        '' Fund_Responsible_Investigator,
+        'SFASU' Corporation_Code,
+        'Stephen F. Austin State University' Corporation_Code_Name,
+        'SFASU' Object_Set_Code,
+        frvfund_indr_code_rate Indirect_Cost_Rate,
+        frvfund_basi_code_ic Indirect_Cost_Type_Code,
+        a.ftvfund_orgn_code_def Unit_Primary_Code,
+        frvfund_inda_code_charge Indirect_Cost_Object_Code,
+        '0' Exclude_From_Import,
+        '' Revenue_Object_Code,
+        '' Default_Cost_Center_Code,
+        '' Revenue_Indirect_Cost_Object_Code,
+        'B' Is_Revenue,
+        'FRINGE' Fund_Fringe_Benefit_Rate_Code,
+        'FRINGE' Fund_Fringe_Benefit_Rate_Name,
+        frbgrnt_project_end_date,
+        frbgrnt_project_start_date
+    from farinva_codes
+    left join ftvfund a
+        on a.ftvfund_fund_code = farinva_fund_code
+        and a.ftvfund_eff_date <= sysdate
+    left join frbgrnt
+        on frbgrnt_code = a.ftvfund_grnt_code
+    left join frvfund
+        on frvfund_code = a.ftvfund_fund_code
+        and frvfund_eff_date <= sysdate
+        and (
+            frvfund_nchg_date > sysdate
+            or frvfund_nchg_date is null
+        )
+    where (a.ftvfund_nchg_date is null
+        or a.ftvfund_nchg_date = (
+            select max(b.ftvfund_nchg_date)
+            from ftvfund b
+            where b.ftvfund_fund_code = a.ftvfund_fund_code
+        )
+    )
+    and (Case
+            when a.ftvfund_term_date is null
+                and a.ftvfund_expend_end_date is null
+            then 'A'
+            when a.ftvfund_term_date <= sysdate
+            or a.ftvfund_expend_end_date <= sysdate
+            then 'T'
+            else null end
+        ) = 'A'
+    union
+    select distinct 'Multiyear-Grants' Grant_Type,
+        frbgrnt_code,
+        frbgrnt_title,
+        a.ftvfund_fund_code Fund_Code,
+        b.ftvfund_title Fund_Name,
+        b.ftvfund_fund_code_pred Fund_Type_Code,
+        (select ftvfund_title
+            from ftvfund
+            where ftvfund_fund_code = b.ftvfund_fund_code_pred
+            and ftvfund_eff_date <= sysdate
+            and (
+                ftvfund_nchg_date > sysdate
+                or ftvfund_nchg_date is null
+            )
+        ) Fund_Type_Name,
+        (Case
+            when b.ftvfund_term_date is null
+                and b.ftvfund_expend_end_date is null
+            then 'A'
+            when b.ftvfund_term_date <= sysdate
+            or b.ftvfund_expend_end_date <= sysdate
+            then 'T'
+            else null end
+        ) Status,
+        frbgrnt_project_start_date Budget_Start_Date,
+        frbgrnt_project_end_date Budget_End_Date,
+        frbgrnt_project_start_date Project_Start_Date,
+        frbgrnt_project_end_date Project_End_Date,
+        (select spriden_id
+            from spriden
+            where spriden_pidm = frbgrnt_pi_pidm
+            and spriden_change_ind is null
+        ) Account_Responsible_Investigator,
+        '' Fund_Responsible_Investigator,
+        'SFASU' Corporation_Code,
+        'Stephen F. Austin State University' Corporation_Code_Name,
+        'SFASU' Object_Set_Code,
+        frvfund_indr_code_rate Indirect_Cost_Rate,
+        frvfund_basi_code_ic Indirect_Cost_Type_Code,
+        b.ftvfund_orgn_code_def Unit_Primary_Code,
+        frvfund_inda_code_charge Indirect_Cost_Object_Code,
+        '0' Exclude_From_Import,
+        '' Revenue_Object_Code,
+        '' Default_Cost_Center_Code,
+        '' Revenue_Indirect_Cost_Object_Code,
+        'B' Is_Revenue,
+        'FRINGE' Fund_Fringe_Benefit_Rate_Code,
+        'FRINGE' Fund_Fringe_Benefit_Rate_Name,
+        frbgrnt_project_end_date,
+        frbgrnt_project_start_date
+    from final_multiyear_grants a
+    left join ftvfund b
+    on b.ftvfund_fund_code = a.ftvfund_fund_code
+        and b.ftvfund_grnt_code = a.ftvfund_grnt_code
+        and b.ftvfund_status_ind = a.ftvfund_status_ind
+        and b.ftvfund_nchg_date = a."max_nchg_date"
+        and b.ftvfund_eff_date = a."max_eff_date"
+        and b.ftvfund_term_date = a."max_term_date"
+        and b.ftvfund_expend_end_date = a."max_end_date"
+    left join frbgrnt
+        on frbgrnt_code = a.ftvfund_grnt_code
+    left join frvfund
+        on frvfund_code = a.ftvfund_fund_code
+        and frvfund_eff_date <= sysdate
+        and (
+            frvfund_nchg_date > sysdate
+            or frvfund_nchg_date is null
+        )
+)
+select distinct 
+    frbgrnt_code Cost_Center_Code,
+    frbgrnt_title Cost_Center_Name,
+    status Display_Status_Code,
+    to_char(frbgrnt_project_start_date, 'mm-dd-yyyy') Start_Date,
+    to_char(frbgrnt_project_end_date, 'mm-dd-yyyy') End_Date
+from all_funds
+where fund_name is not null
+and frbgrnt_code is not null
+and frbgrnt_code not like '27%'
+and frbgrnt_code not like '%R%'
+and status <> 'T'
+order by Cost_Center_Code asc;
