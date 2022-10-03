@@ -11,7 +11,8 @@
           WHEN NBRJOBS_ANN_SALARY = 0 THEN TO_CHAR(NBRJOBS_HRS_PAY*(NBRJOBS_FTE*40)*12) END
     )"Actual_Salary",
     '' "Approved_Salary",
-    nbrjobs_fte*40 "Hours_Worked",
+    (case when nbrjobs_fte  <=1 then nbrjobs_fte*40
+          when nbrjobs_fte > 1 then (nbrjobs_fte/100)*40 end) "Hours_Worked",
     '' "Earning_Type_Code",
     '' "Earning_Type_Name",
     '' "Step_Type_Code",
