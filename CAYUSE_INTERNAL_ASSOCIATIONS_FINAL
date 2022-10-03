@@ -925,7 +925,7 @@ SELECT DISTINCT NVL((SELECT distinct GOBTPAC_EXTERNAL_USER FROM gobtpac WHERE GO
         WHERE FTVORGN_ORGN_CODE = POSNS.nbrjobs_orgn_code_ts
         AND FTVORGN_EFF_DATE <= SYSDATE AND FTVORGN_NCHG_DATE > SYSDATE
         AND FTVORGN_STATUS_IND = 'A') UnitPrimaryCode,
-       POSNS.TS_ORGN_DESC UnitName,
+       POSNS.NBRJOBS_ORGN_CODE_TS || ' ' || POSNS.TS_ORGN_DESC UnitName,
        POSNS.NBRJOBS_DESC Title,
        POSNS.PRIMARY_POSN PrimaryAppointment,
        ' ' USGovernmentAgency,
