@@ -89,6 +89,8 @@ select distinct
         ELSE ftvorgn_orgn_code END) "ParentUnitPrimaryCode",
     'Yes' "Active" 
 from ftvorgn b
+inner join sfadata.csod_division a
+    on a.orgn = b.ftvorgn_orgn_code
 where ftvorgn_eff_date <= sysdate
 and ftvorgn_nchg_date > sysdate
 and ftvorgn_status_ind = 'A'
